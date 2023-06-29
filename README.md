@@ -14,7 +14,7 @@ MaldevEDR is a project I created to serve 2 purposes.
 1. I wanted to learn more about Windows API, and how detections work, 
 2. Provide a tool that Red Teams can use during malware development, to gain insight into what target EDR/AV may see during an engagement.  
 
-MaldevEDR does not perform prevent anything, it simply alerts with information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
+MaldevEDR does not block/alter/prevent anything, it simply alerts with information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
 
 
 ## TODO
