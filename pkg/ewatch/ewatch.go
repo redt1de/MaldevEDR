@@ -58,7 +58,7 @@ func (cf *EWatcher) Start() error {
 	go func() {
 		for e := range consumer.Events {
 
-			////////////////// TESTING ////////////////
+			////////////////// TESTING SYMBOL RESOLUTION ////////////////
 			// if cf.Spawn != nil {
 			// 	val, ok := e.EventData["StackTrace"]
 			// 	// If the key exists

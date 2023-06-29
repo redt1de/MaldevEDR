@@ -12,21 +12,27 @@ This project is still in initial development.  Some functionality is working, so
 
 MaldevEDR is a project I created to serve 2 purposes. 
 1. I wanted to learn more about Windows API, and how detections work, 
-2. Provide a tool that Red Teams can use during malware development, to gain insight into what target EDR/AV may see during an engagement.  MaldevEDR does not perform prevent anything, it simply alerts to information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
+2. Provide a tool that Red Teams can use during malware development, to gain insight into what target EDR/AV may see during an engagement.  
+
+MaldevEDR does not perform prevent anything, it simply alerts with information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
 
 
 ## TODO
 - [ ] Need a DLL to inject, and finish implementing the injection module
 - [ ] Clean up module exits, I have a feeling there may be some scenerios where channels block or errors prevent exit. plus its kind of a mess.
 - [ ] Devlop some real rules for the etw config. As of right now its just test rules.
+- [ ] Work on symbol resolution in ETW stack traces, code is there but it can be buggy
+- [ ] Fill in the cobra cmd descriptions with real info.
 
 ## Modules
 #### ThreatCheck
 - Performs static analysis on a file using Defenders CLI.  This a plain and simple rip-off of Rasta-Mouse's ThreatCheck, just ported to Golang for use in this project.
 
 #### ETW
-- ETW providers that require PPL such as Defenders Threat Intel, are handled differently than normal providers. there is a tool in cmd/ThreatIntelProxy that can be run in kernel mode, and will forward etw events to a named pipe. Up to you how you run this in PPL mode, but the easiest is via kdu.exe > vulnerable drivers (not not all work. -prv 1 has been so far)
+- Monitors various providers, and alerts on events that match user specified rules.
+- Some ETW providers require PPL such as Defenders Threat Intel. These are handled differently than normal providers. there is a tool in cmd/ThreatIntelProxy that can be run in kernel mode, and will forward etw events to a named pipe. Up to you how you run this in PPL mode, but the easiest is via kdu.exe+ vulnerable drivers. (kdu.exe -prv 1 -pse "maldevedr etw ...")
 - ETW rules are handled application side instead passing them to the provider/consumer. This allows us to perform more checks using a custom query language.
+- ETW has an option to provide stack tracing in events (very little documentation on this). This can be enabled per provider in the config file via "stacktrace: true", but this is fairly resource intensive so use sparingly. May be handy for detecting syscalls if we can get symbol resolution working. e.g. if NtProtectVirtualMemory returns to userland code instead of ntdll.
 - See QUERY_LANGUAGE.md for more information on rule syntax
 
 #### Inject
