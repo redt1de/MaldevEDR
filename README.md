@@ -32,8 +32,8 @@ MaldevEDR does not block/alter/prevent anything, it simply alerts with informati
 - Performs static analysis on a file using Defenders CLI.  This a plain and simple rip-off of Rasta-Mouse's ThreatCheck, just ported to Golang for use in this project.
 
 #### ETW
-- Monitors various providers, and alerts on events that match user specified rules.
-- Some ETW providers require PPL such as Defenders Threat Intel. These are handled differently than normal providers. there is a tool in cmd/ThreatIntelProxy that can be run in kernel mode, and will forward etw events to a named pipe. Up to you how you run this in PPL mode, but the easiest is via kdu.exe+ vulnerable drivers. (kdu.exe -prv 1 -pse "ThreatIntelProxy ...")
+- Monitors various providers and alerts on events that match user specified rules.
+- Some ETW providers require PPL such as Defenders Threat Intel. These are handled differently than normal providers. See ThreatIntelProxy below.
 - ETW rules are handled application side instead passing them to the provider/consumer. This allows us to perform more checks using a custom query language.
 - ETW has an option to provide stack tracing in events (very little documentation on this). This can be enabled per provider in the config file via "stacktrace: true", but this is fairly resource intensive so use sparingly. May be handy for detecting syscalls if we can get symbol resolution working. e.g. if NtProtectVirtualMemory returns to userland code instead of ntdll.
 - See QUERY_LANGUAGE.md for more information on rule syntax
