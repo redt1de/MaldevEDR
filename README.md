@@ -10,8 +10,15 @@ This project is still in initial development.  Some functionality is working, so
 - DLL injection/hooks are not working yet.
 
 
-MaldevEDR is a project I created to serve 2 purposes. 1. I wanted to learn more about Windows API, and how detections work, 2. Provide a tool that Red Teams can use during malware development, to gain insight into what target EDR/AV may see during an engagement.  MaldevEDR does not perform prevent anything, it simply alerts to information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
+MaldevEDR is a project I created to serve 2 purposes. 
+1. I wanted to learn more about Windows API, and how detections work, 
+2. Provide a tool that Red Teams can use during malware development, to gain insight into what target EDR/AV may see during an engagement.  MaldevEDR does not perform prevent anything, it simply alerts to information. It is designed to be configurable so we can adapt to different EDR vendors and new tactics.
 
+
+## TODO
+- [ ] Need a DLL to inject, and finish implementing the injection module
+- [ ] Clean up module exits, I have a feeling there may be some scenerios where channels block or errors prevent exit. plus its kind of a mess.
+- [ ] Devlop some real rules for the etw config. As of right now its just test rules.
 
 ## Modules
 #### ThreatCheck
@@ -31,3 +38,6 @@ MaldevEDR is a project I created to serve 2 purposes. 1. I wanted to learn more 
 ## Notes:
 - spawned processes are initially created suspened, debugger is attached, and then resumed. I may add options in the future to use a normal os.Exec() if we need to avoid DEBUG.
 - if you spawn a process for for any ETW monitoring, all rules are appended with a matcher for the process name or pid automatically.
+- the use of expr is a security risk, its essentially an eval on user supplied data, but again this should not run anywhere but a dedicated malware VM.
+-
+
