@@ -39,6 +39,7 @@ MaldevEDR does not block/alter/prevent anything, it simply alerts with informati
 - See QUERY_LANGUAGE.md for more information on rule syntax
 
 #### Inject
+- shoutout p4yl0ad for helping me figure out the Hooking issue.
 - still working on this, but the goal is to inject a DLL into the target to mimic userland hooks, and detect manual syscalls via instrumentation callbacks.
 - plan so far is a c++ dll using MinHook to hook functions of interest and send a message via the named pipe "\\\\.\\pipe\\MalDevEDR\\events" which MaldevEDR.exe inject will be monitoring. If anyone has other ideas let me know.
 

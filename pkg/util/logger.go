@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"regexp"
+	"strings"
 )
 
 const (
@@ -16,34 +17,31 @@ const (
 	Reset        = "\033[0m"
 )
 
-type LogIface interface {
-	Write(a ...any)
-	WriteThreat(a ...any)
-	WriteErr(a ...any)
-	WriteInfo(a ...any)
-	WriteDebug(a ...any)
-	WriteSuccess(a ...any)
-	WriteFatal(a ...any)
-	DebugEnable()
-	SetLogFile(fpath string)
-}
+// type LogIface interface {
+// 	Write(a ...any)
+// 	WriteThreat(a ...any)
+// 	WriteErr(a ...any)
+// 	WriteInfo(a ...any)
+// 	WriteDebug(a ...any)
+// 	WriteSuccess(a ...any)
+// 	WriteFatal(a ...any)
+// 	DebugEnable()
+// 	SetLogFile(fpath string)
+// }
 
 type ConsoleLogger struct {
 	Debug   bool
+	Module  string
 	LogFile string
-}
-
-func (c *ConsoleLogger) SetLogFile(fpath string) {
-	c.LogFile = fpath
-}
-
-func (c *ConsoleLogger) DebugEnable() {
-	c.Debug = true
 }
 
 func (c *ConsoleLogger) WriteInfo(a ...any) {
 	var tmp []any
+
 	tmp = append(tmp, BlueColor+"[INFO]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)
@@ -51,9 +49,14 @@ func (c *ConsoleLogger) WriteInfo(a ...any) {
 		c.writeLogFile(tmp...)
 	}
 }
+
 func (c *ConsoleLogger) WriteThreat(a ...any) {
 	var tmp []any
+
 	tmp = append(tmp, YellowColor+"[THREAT]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)
@@ -71,7 +74,11 @@ func (c *ConsoleLogger) Write(a ...any) {
 
 func (c *ConsoleLogger) WriteErr(a ...any) {
 	var tmp []any
+
 	tmp = append(tmp, RedColor+"[ERROR]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)
@@ -82,7 +89,11 @@ func (c *ConsoleLogger) WriteErr(a ...any) {
 
 func (c *ConsoleLogger) WriteFatal(a ...any) {
 	var tmp []any
+
 	tmp = append(tmp, RedColor+"[ERROR]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)
@@ -93,7 +104,11 @@ func (c *ConsoleLogger) WriteFatal(a ...any) {
 }
 func (c *ConsoleLogger) WriteSuccess(a ...any) {
 	var tmp []any
+
 	tmp = append(tmp, GreenColor+"[SUCCESS]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)
@@ -106,8 +121,13 @@ func (c *ConsoleLogger) WriteDebug(a ...any) {
 	if !c.Debug {
 		return
 	}
+
 	var tmp []any
+
 	tmp = append(tmp, CyanColor+"[DEBUG]")
+	if c.Module != "" {
+		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
+	}
 	tmp = append(tmp, a...)
 	tmp = append(tmp, Reset)
 	fmt.Println(tmp...)

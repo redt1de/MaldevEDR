@@ -33,11 +33,11 @@ func (cf *EWatcher) ruleMatches(jsn, qry string) (bool, string) {
 		if cf.Spawn == nil {
 			return true, ""
 		} else {
-			qry = `( "` + filepath.Base(cf.Spawn.ProcessImage) + `" matches any || ` + strconv.Itoa(int(cf.Spawn.ProcessPid)) + ` in any )`
+			qry = `( "` + filepath.Base(cf.Spawn.ProcessImage) + `" matches any || ` + strconv.Itoa(int(cf.Spawn.ProcessId)) + ` in any )`
 		}
 	} else {
 		if cf.Spawn != nil {
-			qry = qry + ` && ( "` + filepath.Base(cf.Spawn.ProcessImage) + `" matches any || ` + strconv.Itoa(int(cf.Spawn.ProcessPid)) + ` in any)`
+			qry = qry + ` && ( "` + filepath.Base(cf.Spawn.ProcessImage) + `" matches any || ` + strconv.Itoa(int(cf.Spawn.ProcessId)) + ` in any)`
 		}
 	}
 

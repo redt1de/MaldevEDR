@@ -4,13 +4,14 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"log"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/redt1de/MaldevEDR/pkg/config"
 	"github.com/redt1de/MaldevEDR/pkg/dbgproc"
 	"github.com/redt1de/MaldevEDR/pkg/ewatch"
-	"github.com/redt1de/MaldevEDR/pkg/util"
 	"github.com/spf13/cobra"
 )
 
@@ -20,16 +21,16 @@ var etwCmd = &cobra.Command{
 	Short: "Monitor ETW channels for malicious events",
 	Long:  `??????????????????????????????????????????????????????? do later`,
 	Run: func(cmd *cobra.Command, args []string) {
-
 		configPath, _ := cmd.Flags().GetString("config")
-		cfg, err := ewatch.NewEtw(configPath)
+		edr, err := config.NewEdr(configPath)
 		if err != nil {
-			var tmp util.ConsoleLogger
-			tmp.WriteFatal("failed to load the config file: " + err.Error())
+			log.Fatal(err)
 		}
 
+		cfg := edr.Etw
+		ewatch.EtwInit(&cfg)
 		outfile, _ := cmd.Flags().GetString("output")
-		cfg.Logger.SetLogFile(outfile)
+		cfg.Logger.LogFile = outfile
 
 		verbose1, _ := cmd.Flags().GetBool("verbose")
 		if verbose1 {
@@ -49,48 +50,41 @@ var etwCmd = &cobra.Command{
 		doSpawn, _ := cmd.Flags().GetString("spawn")
 		shutdown := make(chan bool)
 		if doSpawn != "" {
-			dSess, err := dbgproc.NewDebugProc(doSpawn, true)
+			dSess, err := dbgproc.NewDebugProcess(doSpawn, true)
 			if err != nil {
 				cfg.Logger.WriteFatal(err)
 			}
-			cfg.Logger.WriteInfo("Creating debug process:", dSess.ProcessImage, "PID:", dSess.ProcessPid)
+			cfg.Logger.WriteInfo("Creating debug process:", dSess.ProcessImage, "PID:", dSess.ProcessId)
 			cfg.Spawn = dSess
 
 			cfg.Spawn.ExitProcessCB = func(ep dbgproc.ExitProcess) {
-				<-shutdown // keep the process alive until we say so, so we can lookup data in late etw events
-				return
+				// keep the process alive until we say so, so we can lookup data in late etw events
+				cfg.Logger.WriteInfo("Process exit requested, waiting for late events")
+				time.Sleep(3 * time.Second)
+				shutdown <- true
 			}
 
 			go cfg.Start()
-			time.Sleep(time.Millisecond * 1000)
 
-			if cfg.Running {
-				dSess.Start()
-			} else {
-				dSess.End()
-				proc, err := os.FindProcess(int(dSess.ProcessPid))
-				if err != nil {
-					cfg.Logger.Write("failed to terminate spawned process:", err)
+			// time.Sleep(1000 * time.Millisecond)
+			go dSess.Resume()
+
+			c := make(chan os.Signal, 1)
+			go func() {
+				signal.Notify(c, os.Interrupt)
+				for range c {
+					cfg.Logger.WriteInfo("Recieved CTRL-C, shutting down...")
+					cfg.Stop()
+					proc, err := os.FindProcess(int(dSess.ProcessId))
+					if err != nil {
+						cfg.Logger.Write("failed to terminate spawned process:", err)
+					}
+					proc.Kill()
+					os.Exit(0)
 				}
-				// Kill the process
-				proc.Kill()
-				return
-			}
+			}()
 
-			// dSess.Start()
-
-			for {
-				if dSess.WantsExit {
-					cfg.Logger.WriteInfo("Process exit requested, waiting for late events")
-					time.Sleep(time.Second * 5)
-					shutdown <- true
-					dSess.End()
-					break
-				}
-			}
-			if cfg.Running {
-				cfg.Stop()
-			}
+			<-shutdown
 
 		} else {
 			go func() {
@@ -107,9 +101,9 @@ var etwCmd = &cobra.Command{
 				cfg.Logger.WriteInfo("Recieved CTRL-C, shutting down...")
 				break
 			}
-			// cfg.Stop()
 
 		}
+		cfg.Stop()
 
 	},
 }
@@ -121,7 +115,7 @@ func init() {
 	etwCmd.Flags().BoolP("very-verbose", "V", false, "include EventData + Metadata JSON output (useful for writing rules)")
 	// etwCmd.Flags().BoolP("kernel", "K", false, "Kernel mode providers, requires kernel mode via kdu.exe -pse")
 	etwCmd.Flags().BoolP("rule-dev", "R", false, "print the final rule queries passed to expr (for rule dev)")
-	etwCmd.Flags().StringP("config", "c", "./etw.yaml", "Path to ETW config file.")
+	// etwCmd.Flags().StringP("config", "c", "./etw.yaml", "Path to ETW config file.")
 	etwCmd.Flags().StringP("override", "O", "", "override all rules with a user specified matcher")
 	etwCmd.Flags().StringP("append", "a", "", "append a matcher to all rules")
 	etwCmd.Flags().StringP("spawn", "s", "", "spawn a process and monitor for events matching the PID or image name")

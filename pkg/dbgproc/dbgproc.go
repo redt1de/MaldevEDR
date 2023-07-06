@@ -7,27 +7,33 @@ import (
 	"syscall"
 	"unsafe"
 
+	"github.com/redt1de/MaldevEDR/pkg/util"
 	"golang.org/x/sys/windows"
 )
 
 func defaultCreateProcessCB(CreateProcessInfo) {}
 func defaultLoadDllCB(LoadDllInfo)             {}
-func defaultProcessExitCB(LoadDllInfo)         {}
+func defaultExitProcessCB(ExitProcess)         {}
+
+func defaultErrCB(e error) {
+	log.Fatal("dbgproc default error callback:" + e.Error())
+}
 
 type DbgSession struct {
-	ProcessImage  string
-	ProcessPid    uint32
-	ProcessHandle *windows.Handle
-	// allowExit       chan bool
-	WantsExit       bool
+	ProcessImage    string
+	ProcessId       uint32
+	ProcessHandle   *windows.Handle
+	ThreadId        uint32
+	ThreadHandle    *windows.Handle
 	CreateProcessCB func(CreateProcessInfo)
 	ExitProcessCB   func(ExitProcess)
 	LoadDllCB       func(LoadDllInfo)
 	pi              *windows.ProcessInformation
-	// Logger          util.LogIface
+	Error           func(error)
+	Logger          util.ConsoleLogger
 }
 
-func NewDebugProc(exe string, dbgPriv bool) (*DbgSession, error) {
+func NewDebugProcess(exe string, dbgPriv bool) (*DbgSession, error) {
 	if dbgPriv {
 		err := AcquireDebugPrivilege()
 		if err != nil {
@@ -35,54 +41,99 @@ func NewDebugProc(exe string, dbgPriv bool) (*DbgSession, error) {
 		}
 
 	}
-	pi, err := createSuspendedProcess(exe)
+
+	var pi windows.ProcessInformation
+	var si windows.StartupInfo
+
+	// Specify the executable to debug
+	pCmdStr, err := windows.UTF16PtrFromString(exe) // bad
 	if err != nil {
-		return nil, errors.New("failed to create process: " + err.Error())
+		return nil, err
 	}
 
-	pHand, err := windows.OpenProcess(PROCESS_ALL_ACCESS, false, pi.ProcessId)
-	// defer windows.CloseHandle(pHand)
-	if err != nil {
-		return nil, errors.New("failed to obtain process handle: " + err.Error())
+	// Create the process in a suspended state
+	if err = windows.CreateProcess(
+		pCmdStr, // Application name
+		nil,     // Command line arguments
+		nil,     // Process handle not inheritable
+		nil,     // Thread handle not inheritable
+		false,   // Set handle inheritance to FALSE
+		// windows.DEBUG_PROCESS|windows.CREATE_SUSPENDED, // Creation flags
+		windows.CREATE_SUSPENDED|windows.CREATE_NEW_CONSOLE,
+		nil, // Use parent's environment block
+		nil, // Use parent's starting directory
+		&si, // Pointer to STARTUPINFO structure
+		&pi, // Pointer to PROCESS_INFORMATION structure
+	); err != nil {
+		return nil, err
 	}
 
-	var ret DbgSession
-	//ret.allowExit = make(chan bool)
-	ret.ProcessPid = pi.ProcessId
-	ret.ProcessImage = exe
-	ret.ProcessHandle = &pHand
-	ret.CreateProcessCB = defaultCreateProcessCB
-	ret.LoadDllCB = defaultLoadDllCB
-	ret.pi = pi
-	// ret.Logger = &util.ConsoleLogger{}
-	// err := _DebugActiveProcess(ret.Pid)
+	// open process for later use
+	// pHand, err := windows.OpenProcess(PROCESS_ALL_ACCESS, false, pi.ProcessId)
+	// if err != nil {
+	// 	return nil, errors.New("failed to obtain process handle: " + err.Error())
+	// }
+	pHand := pi.Process
+	pThread := pi.Thread
+
+	// // Attach debugger to the process
+	// err = _DebugActiveProcess(pi.ProcessId)
 	// if err != nil {
 	// 	return nil, errors.New("failed to start debug session: " + err.Error())
 	// }
-	// ret.Logger.WriteInfo("Creating debug process:", ret.ProcessImage, "PID:", ret.ProcessPid)
-	return &ret, nil
-}
 
-func (ds *DbgSession) End() {
-	//ds.allowExit <- true
-	_DebugActiveProcessStop(ds.ProcessPid)
-	// windows.CloseHandle(*ds.ProcessHandle)
-
-}
-
-func (ds *DbgSession) Start() {
-	go ds.run()
-	// time.Sleep(time.Millisecond * 500)
-	windows.ResumeThread(ds.pi.Thread)
-}
-
-func (ds *DbgSession) run() error {
-	var debugEvent _DEBUG_EVENT
-	err := _DebugActiveProcess(ds.ProcessPid)
-	if err != nil {
-		log.Fatal("failed to start debug session: ", err)
-		return errors.New("failed to start debug session: " + err.Error())
+	ret := DbgSession{
+		ProcessId:       pi.ProcessId,
+		ProcessImage:    exe,
+		ProcessHandle:   &pHand,
+		ThreadHandle:    &pThread,
+		CreateProcessCB: defaultCreateProcessCB,
+		LoadDllCB:       defaultLoadDllCB,
+		ExitProcessCB:   defaultExitProcessCB,
+		pi:              &pi,
+		Error:           defaultErrCB,
+		Logger:          util.ConsoleLogger{Module: "dbgproc"},
 	}
+	return &ret, nil
+
+}
+
+func (d *DbgSession) Stop() error {
+	err := _DebugActiveProcessStop(d.ProcessId)
+	if err != nil {
+		return errors.New("failed to stop debug session: " + err.Error())
+	}
+	err = windows.CloseHandle(d.pi.Process)
+	if err != nil {
+		return errors.New("failed to close debug process handle: " + err.Error())
+	}
+	err = windows.CloseHandle(d.pi.Thread)
+	if err != nil {
+		return errors.New("failed to close debug thread handle: " + err.Error())
+	}
+	return nil
+}
+
+// gorouting resume, then debug loop
+func (ds *DbgSession) Resume() {
+	// Attach debugger to the process
+	err := _DebugActiveProcess(ds.ProcessId)
+	if err != nil {
+		ds.Error(errors.New("failed to start debug session: " + err.Error()))
+	}
+	// println("RESUME 3")
+	var debugEvent _DEBUG_EVENT
+	debugEvent.ProcessId = ds.ProcessId
+	debugEvent.ThreadId = ds.ThreadId
+
+	go func() {
+		_, err := windows.ResumeThread(ds.pi.Thread)
+		if err != nil {
+			ds.Error(errors.New("failed to resume debug process:" + err.Error()))
+
+		}
+	}()
+
 	for {
 		continueStatus := uint32(_DBG_CONTINUE)
 		var milliseconds uint32 = syscall.INFINITE
@@ -90,8 +141,8 @@ func (ds *DbgSession) run() error {
 		// Wait for a debug event...
 		err := _WaitForDebugEvent(&debugEvent, milliseconds)
 		if err != nil {
-			log.Println("WaitForDebugEvent:", err)
-			return err
+			ds.Error(errors.New("WaitForDebugEvent:" + err.Error()))
+			continue // starting in a a goroutine, may hit this before thread is fully resumed so we just loop back around.
 		}
 
 		unionPtr := unsafe.Pointer(&debugEvent.U[0])
@@ -99,8 +150,8 @@ func (ds *DbgSession) run() error {
 		case _CREATE_PROCESS_DEBUG_EVENT:
 			debugInfo := (*_CREATE_PROCESS_DEBUG_INFO)(unionPtr)
 			ds.CreateProcessCB(*(*CreateProcessInfo)(debugInfo))
+
 		case _CREATE_THREAD_DEBUG_EVENT:
-			// debugInfo := (*_CREATE_THREAD_DEBUG_INFO)(unionPtr)
 		case _EXIT_THREAD_DEBUG_EVENT:
 		case _OUTPUT_DEBUG_STRING_EVENT:
 		case _LOAD_DLL_DEBUG_EVENT:
@@ -110,21 +161,19 @@ func (ds *DbgSession) run() error {
 		case _RIP_EVENT:
 		case _EXCEPTION_DEBUG_EVENT:
 		case _EXIT_PROCESS_DEBUG_EVENT:
-			ds.WantsExit = true
 			debugInfo := (*_EXIT_PROCESS_DEBUG_INFO)(unionPtr)
 			ds.ExitProcessCB(*(*ExitProcess)(debugInfo))
-
-			//<-ds.allowExit // wait for approval to exit process
-			return nil
+			return
 		}
 
 		err = _ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, continueStatus)
 		if err != nil {
-			log.Println("ContinueDebugEvent:", err)
-			return err
+			ds.Error(errors.New("ContinueDebugEvent:" + err.Error()))
+			// return
 		}
 
 	}
+
 }
 
 func AcquireDebugPrivilege() error {
@@ -153,39 +202,4 @@ func AcquireDebugPrivilege() error {
 	}
 
 	return nil
-}
-
-func createSuspendedProcess(exePath string) (*windows.ProcessInformation, error) {
-	var (
-		pi  windows.ProcessInformation
-		si  windows.StartupInfo
-		psa windows.SecurityAttributes
-		tsa windows.SecurityAttributes
-	)
-
-	pCmdStr, err := windows.UTF16PtrFromString(exePath) // bad
-	if err != nil {
-		return nil, err
-	}
-
-	// psa.SecurityDescriptor, _ = windows.NewSecurityDescriptor()
-
-	// windows.CreateProcessAsUser(token windows.Token, appName *uint16, commandLine *uint16, procSecurity *windows.SecurityAttributes, threadSecurity *windows.SecurityAttributes, inheritHandles bool, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *windows.StartupInfo, outProcInfo *windows.ProcessInformation) (err error)
-	// windows.CreateProcess      (                     appName *uint16, commandLine *uint16, procSecurity *windows.SecurityAttributes, threadSecurity *windows.SecurityAttributes, inheritHandles bool, creationFlags uint32, env *uint16, currentDir *uint16, startupInfo *windows.StartupInfo, outProcInfo *windows.ProcessInformation) (err error)
-	if err = windows.CreateProcess(
-		nil,
-		pCmdStr,
-		&psa,
-		&tsa,
-		false,
-		windows.CREATE_SUSPENDED,
-		nil,
-		nil,
-		&si,
-		&pi,
-	); err != nil {
-		return nil, err
-	}
-
-	return &pi, nil
 }

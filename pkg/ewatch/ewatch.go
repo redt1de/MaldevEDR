@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net"
 	"strings"
 
-	"github.com/Microsoft/go-winio"
 	"github.com/antonmedv/expr"
 	"github.com/redt1de/MaldevEDR/pkg/ewatch/etw"
+	"github.com/redt1de/MaldevEDR/pkg/pipemon"
 )
 
 func (cf *EWatcher) Stop() {
@@ -108,7 +109,7 @@ func (cf *EWatcher) Start() error {
 					match, q := cf.ruleMatches(cmbJson, "")
 					if match {
 						// cf.Logger.WriteThreat("Channel:", e.System.Channel, "Event ID:", e.System.EventID, "Task:", e.System.Task.Name, "Matches: "+q)
-						cf.Logger.WriteThreat("Channel:", e.System.Channel, ", Task:", e.System.Task.Name, ", Matches: "+q)
+						cf.Logger.WriteThreat("Channel:", e.System.Channel+", Task:", e.System.Task.Name+", Matches: "+q)
 
 						if cf.Verbose == 2 {
 							cf.Logger.Write(cmbJson)
@@ -127,7 +128,7 @@ func (cf *EWatcher) Start() error {
 								match, _ := cf.ruleMatches(cmbJson, rule.Query)
 								if match {
 									// cf.Logger.WriteThreat("Channel:", e.System.Channel, "Event ID:", e.System.EventID, "Task:", e.System.Task.Name, "Matches:", rule.Name)
-									cf.Logger.WriteThreat("Channel:", e.System.Channel, ", Task:", e.System.Task.Name, ", Matches:", rule.Name)
+									cf.Logger.WriteThreat("Channel:", e.System.Channel+", Task:", e.System.Task.Name+", Matches:", rule.Name)
 									if rule.Msg != "" {
 										cf.Logger.Write(cf.parseMsg(rule.Msg, cmbJson))
 									}
@@ -154,29 +155,26 @@ func (cf *EWatcher) Start() error {
 				cf.Logger.WriteInfo("Monitoring:", ppl.Name, "via ThreatIntelProxy")
 				enabledCount++
 			} else {
-				pipePath := `\\.\pipe\MalDevEDR\events`
-				f, err := winio.DialPipe(pipePath, nil)
-				if err != nil {
-					// log.Fatalf("error opening pipe: %v", err)
-					cf.Logger.WriteErr("failed to open the ThreatIntelProxy pipe, but PPL providers are enabled.")
-					cf.Logger.WriteInfo("Make sure ThreatIntelProxy is running if you want to monitor PPL providers")
-					break
-				}
-				enabledCount++
-				cf.Logger.WriteInfo("Monitoring:", ppl.Name, "via ThreatIntelProxy")
-				go func() {
+				mon := pipemon.NewPipe(`\\.\pipe\MalDevEDR\events`, func(c net.Conn) {
 					for {
-						d := json.NewDecoder(f)
+						d := json.NewDecoder(c)
 						var event etw.Event
-						err = d.Decode(&event)
+						err := d.Decode(&event)
 						if err != nil {
-							fmt.Println(err)
+							cf.Logger.WriteErr(err)
 							break
 						}
 						consumer.Events <- &event
 					}
-					f.Close()
-				}()
+				})
+				mon.Error = func(err error) {
+					cf.Logger.WriteErr("pipe error: " + err.Error())
+				}
+
+				enabledCount++
+				cf.Logger.WriteInfo("Monitoring:", ppl.Name, "via ThreatIntelProxy")
+				go mon.Monitor()
+
 			}
 		}
 	}

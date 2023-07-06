@@ -8,10 +8,9 @@ import (
 	"encoding/json"
 	"flag"
 	"log"
-	"strings"
+	"net"
 
 	"github.com/Microsoft/go-winio"
-	"github.com/redt1de/MaldevEDR/pkg/config"
 	"github.com/redt1de/MaldevEDR/pkg/ewatch"
 	"github.com/redt1de/MaldevEDR/pkg/ewatch/etw"
 )
@@ -23,17 +22,38 @@ func main() {
 	var cpath string
 	flag.StringVar(&cpath, "c", "./etw.yaml", "Path to config file")
 	shutdown = make(chan bool)
-
-	edr, err := config.NewEdr(cpath)
+	cfg, err := ewatch.NewEtw(cpath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	cfg := edr.Etw
-	ewatch.EtwInit(&cfg)
-
 	pipePath := `\\.\pipe\MalDevEDR\events`
 
+	l, err := winio.ListenPipe(pipePath, nil)
+	if err != nil {
+		log.Fatal("listen error:", err)
+	}
+	defer l.Close()
+	log.Printf("Server listening op pipe %v\n", pipePath)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Fatal("accept error:", err)
+		}
+		go handleClient(cfg, conn)
+	}
+
+}
+
+func handleClient(cfg *ewatch.EWatcher, c net.Conn) {
+	defer c.Close()
+	log.Printf("Client connected [%s]", c.RemoteAddr().Network())
+	startSess(cfg, c)
+	log.Println("Client disconnected")
+}
+
+func startSess(cfg *ewatch.EWatcher, conn net.Conn) {
 	s := etw.NewRealTimeSession("ThreatIntelProxy")
 	defer s.Stop()
 
@@ -55,24 +75,18 @@ func main() {
 
 	go func() {
 		var b []byte
+		var err error
 		for e := range c.Events {
-			conn, err := winio.DialPipe(pipePath, nil)
-			if err != nil {
-				if strings.Contains(err.Error(), "The system cannot find the file specified") { // ignore events if the client is not running/listening
-					continue
-				}
-				log.Println(err)
-			}
 			if b, err = json.Marshal(e); err != nil {
 				log.Println(err)
 			}
 
-			_, err = conn.Write(b)
+			_, err := conn.Write(b)
 			if err != nil {
 				log.Println(err)
 
-				// shutdown <- true
-				// break
+				shutdown <- true
+				break
 			}
 
 		}

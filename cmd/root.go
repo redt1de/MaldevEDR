@@ -26,5 +26,5 @@ func Execute() {
 }
 
 func init() {
-	// rootCmd.Flags().StringP("config", "c", "./config.yml", "path to config file")
+	rootCmd.PersistentFlags().StringP("config", "c", "./config.yaml", "path to config file")
 }

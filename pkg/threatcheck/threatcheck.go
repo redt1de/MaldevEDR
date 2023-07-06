@@ -37,7 +37,7 @@ type Scanner interface {
 }
 
 type Defender struct {
-	Logger    util.LogIface
+	Logger    *util.ConsoleLogger
 	FileBytes []byte
 	FilePath  string
 	Malicious bool
@@ -45,7 +45,7 @@ type Defender struct {
 }
 
 func NewDefender() *Defender {
-	return &Defender{Logger: &util.ConsoleLogger{}}
+	return &Defender{Logger: &util.ConsoleLogger{Module: "threatcheck"}}
 }
 
 func (d *Defender) AnalyzeFile(fPath string) DefenderScanResult {
@@ -60,7 +60,7 @@ func (d *Defender) AnalyzeFile(fPath string) DefenderScanResult {
 		os.Mkdir("C:\\Temp", os.ModePerm)
 	}
 
-	d.Logger.WriteInfo("Analyzing with Defender...")
+	d.Logger.WriteInfo("Performing static analysis via MpCmdRun.exe...")
 
 	d.FilePath = filepath.Join("C:\\Temp", "file.exe")
 	ioutil.WriteFile(d.FilePath, d.FileBytes, os.ModePerm)

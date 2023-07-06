@@ -19,13 +19,11 @@ var threatcheckCmd = &cobra.Command{
 			log.Fatal("failed open mal file")
 		}
 
+		outfile, _ := cmd.Flags().GetString("output")
 		verbose, _ := cmd.Flags().GetBool("verbose")
 		defender := threatcheck.NewDefender()
-		if verbose {
-			defender.Logger.DebugEnable()
-		}
-		outfile, _ := cmd.Flags().GetString("output")
-		defender.Logger.SetLogFile(outfile)
+		defender.Logger.Debug = verbose
+		defender.Logger.LogFile = outfile
 
 		defender.AnalyzeFile(fPath)
 

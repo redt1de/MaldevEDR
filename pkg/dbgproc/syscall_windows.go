@@ -219,4 +219,3 @@ func _IsWow64Process(process syscall.Handle, wow64process *uint32) (ok uint32) {
 	ok = uint32(r0)
 	return
 }
-
