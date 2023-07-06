@@ -41,7 +41,7 @@ MaldevEDR does not block/alter/prevent anything, it simply alerts with informati
 - ETW has an option to provide stack tracing in events (very little documentation on this). This can be enabled per provider in the config file via "stacktrace: true", but this is fairly resource intensive so use sparingly. May be handy for detecting syscalls if we can get symbol resolution working. e.g. if NtProtectVirtualMemory returns to userland code instead of ntdll.
 - See QUERY_LANGUAGE.md for more information on rule syntax
 
-![Screenshot](threatcheck.png)
+![Screenshot](etw.png)
 
 
 ## Inject
