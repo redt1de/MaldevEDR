@@ -1,0 +1,3 @@
+﻿  main.cpp
+Z:\c\DetoursNT\SampleHookDLL\main.cpp(43,37): error C2440: '=': cannot convert from 'NTSTATUS (__cdecl *)(HANDLE,PVOID *,ULONG_PTR,PSIZE_T,ULONG,ULONG)' to 'fnNtAllocateVirtualMemory'
+Z:\c\DetoursNT\SampleHookDLL\main.cpp(43,37): message : This conversion requires a reinterpret_cast, a C-style cast or parenthesized function-style cast

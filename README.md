@@ -63,6 +63,7 @@ MaldevEDR does not block/alter/prevent anything, it simply alerts with informati
 
 ## ThreatIntelProxy
  This is a side tool used to forward events from PPL providers to the named pipe "\\\\.\\pipe\\MalDevEDR\\events". It uses the same config file for etw. This must be run as a PPL process, how you do that is up to you. The quickest way to get started is to configure the vulnerable drivers block list in your VM, and execute it with https://github.com/hfiref0x/KDU.git.  This will use a vulnerable driver to execute the proxy as a PPL, and allow it to recieve events from Microsoft-Windows-Threat-Intelligence and Sysmon (Moving to PPL in newer releases)
+ 
  ```
 kdu.exe -prv 1 -pse "ThreatIntelProxy.exe" 
  ```

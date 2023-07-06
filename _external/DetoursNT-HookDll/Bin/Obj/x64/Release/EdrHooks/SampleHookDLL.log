@@ -1,0 +1,4 @@
+﻿  main.cpp
+     Creating library c:\temp\EdrHooksx64.lib and object c:\temp\EdrHooksx64.exp
+LIBCMT.lib(tlssup.obj) : warning LNK4210: .CRT section exists; there may be unhandled static initializers or terminators
+  SampleHookDLL.vcxproj -> Z:\MalDevEDR\_external\bin\EdrHooksx64.dll
