@@ -13,7 +13,7 @@ func main() {
 	parms := strings.Split(strings.TrimRight(tmp[1], ")"), ",")
 
 	arglist := []string{}
-	jstring := `wsprintfA(jout, "{\"Function\":\"` + funcName + `\",\"EventData\":{`
+	jstring := `wsprintfA(jout, "{\"Function\":\"` + funcName + `\",\"mode\":\"userland\",\"Args\":{`
 	for _, p := range parms {
 		ptmp := strings.Split(p, " ")
 		datype := ptmp[0]

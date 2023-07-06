@@ -27,4 +27,5 @@ func Execute() {
 
 func init() {
 	rootCmd.PersistentFlags().StringP("config", "c", "./config.yaml", "path to config file")
+	rootCmd.PersistentFlags().StringP("output", "o", "", "log output to a file")
 }

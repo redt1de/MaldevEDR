@@ -1,5 +1,13 @@
 
-
+hooks:
+  libdir: z:\\MalDevEDR\\_external\\bin
+  helper_dll: x64EDRHelper.dll
+  hook_dll: EdrHooksx64.dll
+  pipe: \\.\pipe\MalDevEDR\hooks
+  rules:
+    - name: Executable Memory Allocation
+      match: Function == "NtAllocateVirtualMemory" && Args.Protect in ["0x1","0x2","0x4","0x8"]
+      # message: EventData.Protect
 
 etw:
   global_rules:

@@ -4,18 +4,16 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
-	"encoding/json"
 	"log"
-	"net"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"time"
 
 	"github.com/redt1de/MaldevEDR/pkg/config"
 	"github.com/redt1de/MaldevEDR/pkg/dbgproc"
 	"github.com/redt1de/MaldevEDR/pkg/ewatch"
-	"github.com/redt1de/MaldevEDR/pkg/inject"
-	"github.com/redt1de/MaldevEDR/pkg/pipemon"
+	"github.com/redt1de/MaldevEDR/pkg/hooks"
 	"github.com/redt1de/MaldevEDR/pkg/threatcheck"
 	"github.com/redt1de/MaldevEDR/pkg/util"
 	"github.com/spf13/cobra"
@@ -29,13 +27,17 @@ var analyzeCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 
 		configPath, _ := cmd.Flags().GetString("config")
-		edr, err := config.NewEdr(configPath)
+		outfile, _ := cmd.Flags().GetString("output")
+		verbose1, _ := cmd.Flags().GetBool("verbose")
+		doSpawn, _ := cmd.Flags().GetString("file")
+
+		edrCfg, err := config.NewEdr(configPath)
 		if err != nil {
 			log.Fatal(err)
 		}
 
 		var logger util.ConsoleLogger
-		outfile, _ := cmd.Flags().GetString("output")
+
 		// verbose, _ := cmd.Flags().GetBool("verbose")
 		logger.LogFile = outfile
 
@@ -49,28 +51,7 @@ var analyzeCmd = &cobra.Command{
 		defender := threatcheck.NewDefender()
 		defender.AnalyzeFile(fPath)
 
-		// ////////// ETW
-
-		cfg := edr.Etw
-		ewatch.EtwInit(&cfg)
-		cfg.Logger.LogFile = outfile
-
-		verbose1, _ := cmd.Flags().GetBool("verbose")
-		if verbose1 {
-			cfg.Verbose = 1
-		}
-
-		verbose2, _ := cmd.Flags().GetBool("very-verbose")
-		if verbose2 {
-			cfg.Verbose = 2
-		}
-
-		cfg.Override, _ = cmd.Flags().GetString("override")
-		// cfg.KernelMode, _ = cmd.Flags().GetBool("kernel")
-		cfg.DisableRules, _ = cmd.Flags().GetBool("no-rules")
-		cfg.Append, _ = cmd.Flags().GetString("append")
-		cfg.RuleDbg, _ = cmd.Flags().GetBool("rule-dev")
-		doSpawn, _ := cmd.Flags().GetString("file")
+		///////////////////// dbgproc
 		shutdown := make(chan bool)
 		dSess, err := dbgproc.NewDebugProcess(doSpawn, true)
 		dSess.Logger.LogFile = outfile
@@ -81,7 +62,22 @@ var analyzeCmd = &cobra.Command{
 			dSess.Logger.WriteErr(e)
 		}
 		dSess.Logger.WriteInfo("Creating debug process:", dSess.ProcessImage, "PID:", dSess.ProcessId)
-		cfg.Spawn = dSess
+
+		// ////////// ETW
+
+		etwCfg := edrCfg.Etw
+		ewatch.EtwInit(&etwCfg)
+		etwCfg.Logger.LogFile = outfile
+		etwCfg.Spawn = dSess
+		if verbose1 {
+			etwCfg.Verbose = 1
+		}
+
+		// etwCfg.Override, _ = cmd.Flags().GetString("override")
+		// cfg.KernelMode, _ = cmd.Flags().GetBool("kernel")
+		// etwCfg.DisableRules, _ = cmd.Flags().GetBool("no-rules")
+		// etwCfg.Append, _ = cmd.Flags().GetString("append")
+		// etwCfg.RuleDbg, _ = cmd.Flags().GetBool("rule-dev")
 
 		dSess.ExitProcessCB = func(ep dbgproc.ExitProcess) {
 			// keep the process alive until we say so, so we can lookup data in late etw events
@@ -91,40 +87,22 @@ var analyzeCmd = &cobra.Command{
 		}
 
 		////////// Injector
-		inject.Logger.LogFile = outfile
+		hookCfg := edrCfg.Hooks
+		hooks.HookerInit(&hookCfg)
+		hookCfg.Logger.LogFile = outfile
+		go hookCfg.Monitor()
 
-		hookmon := pipemon.NewPipe(`\\.\pipe\MalDevEDR\hooks`, func(c net.Conn) {
-			for {
-				blah := inject.HookEvent{}
-				d := json.NewDecoder(c)
-				err := d.Decode(&blah)
-				if err != nil {
-					if err.Error() == "EOF" {
-
-						break
-					} else {
-						inject.Logger.WriteErr(err)
-					}
-				}
-				inject.Logger.WriteThreat(blah.Function)
-
-				if verbose1 || verbose2 {
-					pretty, _ := json.MarshalIndent(blah.EventData, "", "  ")
-					inject.Logger.Write(string(pretty))
-				}
-			}
-		})
-		hookmon.Error = func(err error) {
-			inject.Logger.WriteErr("pipe error: " + err.Error())
+		err = hookCfg.Inject(*dSess.ProcessHandle, filepath.Join(hookCfg.LibDir, hookCfg.HookDll))
+		if err != nil {
+			hookCfg.Logger.WriteErr(err)
+		} else {
+			hookCfg.Logger.WriteInfo("process import table patched, hooks in place")
 		}
-		go hookmon.Monitor()
 
-		go cfg.Start()
+		//////////////////////////////////
+		go etwCfg.Start()
 
 		time.Sleep(100 * time.Millisecond)
-
-		inject.Inject(*dSess.ProcessHandle, "z:\\testing\\detour64.dll")
-		inject.Logger.WriteInfo("process import table patched, hooks in place")
 
 		go dSess.Resume()
 
@@ -132,11 +110,11 @@ var analyzeCmd = &cobra.Command{
 		go func() {
 			signal.Notify(c, os.Interrupt)
 			for range c {
-				cfg.Logger.WriteInfo("Recieved CTRL-C, shutting down...")
-				cfg.Stop()
+				etwCfg.Logger.WriteInfo("Recieved CTRL-C, shutting down...")
+				etwCfg.Stop()
 				proc, err := os.FindProcess(int(dSess.ProcessId))
 				if err != nil {
-					cfg.Logger.Write("failed to terminate spawned process:", err)
+					etwCfg.Logger.Write("failed to terminate spawned process:", err)
 				}
 				proc.Kill()
 				os.Exit(0)
@@ -145,8 +123,8 @@ var analyzeCmd = &cobra.Command{
 
 		<-shutdown
 		logger.WriteInfo("Shutting down...")
-		cfg.Stop()
-		hookmon.Stop()
+		etwCfg.Stop()
+		hookCfg.Stop()
 
 	},
 }
@@ -155,6 +133,5 @@ func init() {
 	rootCmd.AddCommand(analyzeCmd)
 	analyzeCmd.Flags().StringP("file", "f", "", "malicious file to analyze")
 	analyzeCmd.Flags().BoolP("verbose", "v", false, "be verbose")
-	analyzeCmd.Flags().StringP("output", "o", "", "log output to a file")
-	// analyzeCmd.Flags().StringP("config", "c", "./etw.yaml", "Path to ETW config file.")
+	// analyzeCmd.Flags().StringP("output", "o", "", "log output to a file")
 }

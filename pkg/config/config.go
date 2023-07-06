@@ -4,11 +4,13 @@ import (
 	"io/ioutil"
 
 	"github.com/redt1de/MaldevEDR/pkg/ewatch"
+	"github.com/redt1de/MaldevEDR/pkg/hooks"
 	"gopkg.in/yaml.v3"
 )
 
 type EdrConfig struct {
-	Etw ewatch.EWatcher `yaml:"etw"`
+	Etw   ewatch.EWatcher `yaml:"etw"`
+	Hooks hooks.HookCfg   `yaml:"hooks"`
 }
 
 func NewEdr(fpath string) (*EdrConfig, error) {

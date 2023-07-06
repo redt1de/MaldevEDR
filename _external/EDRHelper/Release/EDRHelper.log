@@ -1,0 +1,12 @@
+﻿  pch.cpp
+  dllmain.cpp
+     Creating library C:\Users\brad.brown\source\repos\EDRHelper\Release\x86EDRHelper.lib and object C:\Users\brad.brown\source\repos\EDRHelper\Release\x86EDRHelper.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 2 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+detoursx86.lib(detours.obj) : warning LNK4099: PDB '' was not found with 'detoursx86.lib(detours.obj)' or at ''; linking object as if no debug info
+detoursx86.lib(modules.obj) : warning LNK4099: PDB '' was not found with 'detoursx86.lib(modules.obj)' or at ''; linking object as if no debug info
+detoursx86.lib(disasm.obj) : warning LNK4099: PDB '' was not found with 'detoursx86.lib(disasm.obj)' or at ''; linking object as if no debug info
+detoursx86.lib(creatwth.obj) : warning LNK4099: PDB '' was not found with 'detoursx86.lib(creatwth.obj)' or at ''; linking object as if no debug info
+  EDRHelper.vcxproj -> C:\Users\brad.brown\source\repos\EDRHelper\Release\x86EDRHelper.dll

@@ -33,6 +33,5 @@ var threatcheckCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(threatcheckCmd)
 	threatcheckCmd.Flags().StringP("file", "f", "", "malicious file to analyze")
-	threatcheckCmd.Flags().StringP("output", "o", "", "log output to a file")
 	threatcheckCmd.Flags().BoolP("verbose", "v", false, "be verbose")
 }

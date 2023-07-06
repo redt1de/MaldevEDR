@@ -4,6 +4,15 @@ Copyright © 2023 NAME HERE <EMAIL ADDRESS>
 package cmd
 
 import (
+	"log"
+	"os"
+	"os/signal"
+	"path/filepath"
+	"time"
+
+	"github.com/redt1de/MaldevEDR/pkg/config"
+	"github.com/redt1de/MaldevEDR/pkg/dbgproc"
+	"github.com/redt1de/MaldevEDR/pkg/hooks"
 	"github.com/spf13/cobra"
 )
 
@@ -13,55 +22,89 @@ var injectCmd = &cobra.Command{
 	Short: "Inject a monitoring DLL into a target process",
 	Long:  `???????????????????????????????????????????`,
 	Run: func(cmd *cobra.Command, args []string) {
-		// spawn, _ := cmd.Flags().GetString("spawn")
-		// pid, _ := cmd.Flags().GetUint32("pid")
+		configPath, _ := cmd.Flags().GetString("config")
+		outfile, _ := cmd.Flags().GetString("output")
+		verbose1, _ := cmd.Flags().GetBool("verbose")
+		doSpawn, _ := cmd.Flags().GetString("spawn")
+		doPid, _ := cmd.Flags().GetUint32("pid")
+		custDll, _ := cmd.Flags().GetString("dll")
+		noRules, _ := cmd.Flags().GetBool("no-rules")
 
-		// if spawn == "" && pid <= 0 {
-		// 	tmp := util.ConsoleLogger{}
-		// 	tmp.WriteFatal("you must specify -s or -p so I know where to inject")
-		// }
+		edrCfg, err := config.NewEdr(configPath)
+		if err != nil {
+			log.Fatal(err)
+		}
 
-		// injector := dllinject.NewInjector()
-		// injector.Logger = &util.ConsoleLogger{}
+		hookCfg := &edrCfg.Hooks
+		hooks.HookerInit(hookCfg)
+		hookCfg.Logger.LogFile = outfile
+		hookCfg.Verbose = verbose1
+		hookCfg.DisableRules = noRules
 
-		// shutdown := make(chan bool)
-		// if spawn != "" {
-		// 	dSess, err := dbgproc.NewDebugProc(spawn, true)
-		// 	if err != nil {
-		// 		injector.Logger.WriteFatal(err)
-		// 	}
-		// 	injector.Logger.WriteInfo("Creating debug process:", dSess.ProcessImage, "PID:", dSess.ProcessPid)
-		// 	injector.Pid = dSess.ProcessPid
-		// 	injector.ProcessHandle = dSess.ProcessHandle
+		if doSpawn != "" {
+			shutdown := make(chan bool)
+			dSess, err := dbgproc.NewDebugProcess(doSpawn, true)
+			dSess.Logger.LogFile = outfile
+			if err != nil {
+				dSess.Logger.WriteFatal(err)
+			}
+			dSess.ExitProcessCB = func(ep dbgproc.ExitProcess) {
+				// keep the process alive until we say so, so we can lookup data in late etw events
+				dSess.Logger.WriteInfo("Process exit requested, waiting for late events")
+				time.Sleep(2 * time.Second)
+				shutdown <- true
+			}
+			dSess.Error = func(e error) {
+				dSess.Logger.WriteErr(e)
+			}
+			dSess.Logger.WriteInfo("Creating debug process:", dSess.ProcessImage, "PID:", dSess.ProcessId)
 
-		// 	dSess.CreateProcessCB = func(ep dbgproc.CreateProcessInfo) { // using the createprocess event in debug loop to call inject.  we cant suspened,inject resume. and if we inject after resume we miss events.
-		// 		err = injector.Inject(dllinject.DLLPATH)
-		// 		if err != nil {
-		// 			injector.End()
-		// 			injector.Logger.WriteFatal("failed to inject DLL:", err)
-		// 		}
-		// 		injector.Logger.WriteInfo("DLL injected")
-		// 	}
+			go hookCfg.Monitor()
 
-		// 	dSess.ExitProcessCB = func(ep dbgproc.ExitProcess) {
-		// 		injector.Logger.WriteInfo("Process Exiting...")
-		// 		// time.Sleep(3 * time.Second)
-		// 		injector.End()
-		// 		shutdown <- true
-		// 	}
+			time.Sleep(100 * time.Millisecond)
 
-		// 	go injector.Monitor()
+			dllpath := filepath.Join(hookCfg.LibDir, hookCfg.HookDll)
+			if custDll != "" {
+				dllpath = custDll
+			}
+			err = hookCfg.Inject(*dSess.ProcessHandle, dllpath)
+			if err != nil {
+				hookCfg.Logger.WriteErr(err)
+				hookCfg.Stop()
+				proc, err := os.FindProcess(int(dSess.ProcessId))
+				if err != nil {
+					hookCfg.Logger.Write("failed to terminate spawned process:", err)
+				}
+				proc.Kill()
+				os.Exit(1)
+			}
+			hookCfg.Logger.WriteInfo("process import table patched, hooks in place")
 
-		// 	time.Sleep(time.Millisecond * 1000)
+			go dSess.Resume()
 
-		// 	injector.Logger.WriteInfo("Resuming process...")
-		// 	dSess.Start()
+			c := make(chan os.Signal, 1)
+			go func() {
+				signal.Notify(c, os.Interrupt)
+				for range c {
+					hookCfg.Logger.WriteInfo("Recieved CTRL-C, shutting down...")
+					hookCfg.Stop()
+					proc, err := os.FindProcess(int(dSess.ProcessId))
+					if err != nil {
+						hookCfg.Logger.Write("failed to terminate spawned process:", err)
+					}
+					proc.Kill()
+					os.Exit(0)
+				}
+			}()
+			<-shutdown
+			hookCfg.Logger.WriteInfo("Shutting down...")
+			hookCfg.Stop()
+		} else if doPid > 0 {
+			hookCfg.Logger.WriteFatal("TODO: implement pid based dll injection hooks")
 
-		// 	<-shutdown
-
-		// } else {
-
-		// }
+		} else {
+			hookCfg.Logger.WriteFatal("you must specify --pid or --spawn")
+		}
 
 	},
 }
@@ -69,6 +112,8 @@ var injectCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(injectCmd)
 	injectCmd.Flags().StringP("spawn", "s", "", "spawn a process")
-	injectCmd.Flags().StringP("dll", "d", "", "use a custom DLL(not implemented yet)")
+	injectCmd.Flags().StringP("dll", "d", "", "inject a custom DLL")
 	injectCmd.Flags().Uint32P("pid", "p", 0, "injection into process by PID")
+	injectCmd.Flags().BoolP("verbose", "v", false, "verbose")
+	injectCmd.Flags().BoolP("no-rules", "N", false, "disable rule checks, helpful for rule dev (lotsa output)")
 }

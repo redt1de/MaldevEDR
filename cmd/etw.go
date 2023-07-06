@@ -119,5 +119,5 @@ func init() {
 	etwCmd.Flags().StringP("override", "O", "", "override all rules with a user specified matcher")
 	etwCmd.Flags().StringP("append", "a", "", "append a matcher to all rules")
 	etwCmd.Flags().StringP("spawn", "s", "", "spawn a process and monitor for events matching the PID or image name")
-	etwCmd.Flags().StringP("output", "o", "", "log output to a file")
+	// etwCmd.Flags().StringP("output", "o", "", "log output to a file")
 }

@@ -1,0 +1,8 @@
+﻿  pch.cpp
+  dllmain.cpp
+     Creating library Z:\MalDevEDR\_external\EDRHelper\..\bin\x64EDRHelper.lib and object Z:\MalDevEDR\_external\EDRHelper\..\bin\x64EDRHelper.exp
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 2 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  EDRHelper.vcxproj -> Z:\MalDevEDR\_external\bin\x64EDRHelper.dll

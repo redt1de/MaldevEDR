@@ -1,0 +1,2 @@
+C:\Users\brad.brown\source\repos\EDRHelper\Release\x86EDRHelper.dll
+Z:\MalDevEDR\_external\EDRHelper\Release\x86EDRHelper.dll
