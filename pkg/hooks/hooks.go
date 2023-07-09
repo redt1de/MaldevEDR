@@ -18,6 +18,32 @@ var ()
 
 const PROCESS_ALL_ACCESS = 0x1F0FFF
 
+const (
+	MSG_STATUS = 1
+	MSG_MODULE = 2
+	MSG_EVENT  = 0
+)
+
+type HookMessage struct {
+	Type   int       `json:"Type,omitempty"`
+	Status Status    `json:"Status,omitempty"`
+	Module Module    `json:"Module,omitempty"`
+	Event  HookEvent `json:"Event,omitempty"`
+}
+
+// { "Type":2, "Module":{"Name":"%s","Base": "0x%p","Size":"0x%x"}}}
+type Module struct {
+	Name string `json:"name,omitempty"`
+	Base string `json:"Base,omitempty"`
+	Size string `json:"Size,omitempty"`
+}
+
+type Status struct {
+	Status  string `json:"Status,omitempty"`
+	Message string `json:"Message,omitempty"`
+}
+
+// { "Type":0, "Event":{"Function":"blah","Mode": "userland","ReturnAddress":"blah","Args":{"blah":"blah"}}}
 type HookEvent struct {
 	Function      string                 `json:"Function"`
 	Mode          string                 `json:"Mode"`
@@ -128,9 +154,9 @@ func (h *HookCfg) InjectRemoteThread(hProcess windows.Handle, dll string) error 
 func (h *HookCfg) Handler(c net.Conn) {
 	for {
 		// var pretty []byte
-		blah := HookEvent{}
+		msg := HookMessage{}
 		d := json.NewDecoder(c)
-		err := d.Decode(&blah)
+		err := d.Decode(&msg)
 		if err != nil {
 			if err.Error() == "EOF" {
 				break
@@ -139,46 +165,10 @@ func (h *HookCfg) Handler(c net.Conn) {
 				continue
 			}
 		}
-		h.ParseEvent(blah)
+		if msg.Event.Function != "" {
+			h.ParseEvent(msg.Event)
+		}
 
-		// pretty, _ = json.MarshalIndent(blah, "", "  ")
-
-		// if h.DisableRules {
-		// 	h.Logger.WriteThreat("Mode", blah.Mode, ", Function:", blah.Function, ", Matches: Rules Disabled")
-		// 	if h.Verbose {
-		// 		h.Logger.Write(string(pretty))
-		// 	}
-
-		// 	continue
-		// }
-
-		// if h.Override != "" {
-		// 	match, _ := h.ruleMatches(string(pretty), h.Override)
-		// 	if match {
-		// 		// cf.Logger.WriteThreat("Channel:", e.System.Channel, "Event ID:", e.System.EventID, "Task:", e.System.Task.Name, "Matches: "+q)
-		// 		h.Logger.WriteThreat("CUSTOM detected via", blah.Mode, "hook", "(User Override)")
-		// 		if h.Verbose {
-		// 			h.Logger.Write(string(pretty))
-		// 		}
-
-		// 	}
-		// } else {
-
-		// 	for _, r := range h.Rules {
-		// 		match, q := h.ruleMatches(string(pretty), r.Query)
-		// 		if match {
-		// 			// h.Logger.WriteThreat("Function:", blah.Function+" via", blah.Mode, "hook Matches: "+r.Name)
-		// 			h.Logger.WriteThreat(r.Name, "detected via", blah.Mode, "hook", "("+q+")")
-
-		// 			if h.Verbose {
-		// 				h.Logger.Write(string(pretty))
-		// 			}
-		// 			if r.Msg != "" {
-		// 				h.Logger.WriteSuccess(h.parseMsg(r.Msg, string(pretty)))
-		// 			}
-		// 		}
-		// 	}
-		// }
 	}
 }
 func (h *HookCfg) ParseEvent(blah HookEvent) {

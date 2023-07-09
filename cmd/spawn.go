@@ -6,6 +6,7 @@ package cmd
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -99,16 +100,23 @@ var spawnCmd = &cobra.Command{
 			hookCfg.RuleDbg = ruleDev
 
 			dSess.DebugOutputCB = func(dbgMsg string) {
-				blah := hooks.HookEvent{}
+				blah := hooks.HookMessage{}
 				err := json.Unmarshal([]byte(dbgMsg), &blah)
 				if err == nil {
-					hookCfg.ParseEvent(blah)
+					switch blah.Type {
+					case hooks.MSG_EVENT: // Event
+						hookCfg.ParseEvent(blah.Event)
+					case hooks.MSG_STATUS: //Status
+						fmt.Println(blah.Status)
+					case hooks.MSG_MODULE: //Module
+						fmt.Println(blah.Module)
+					}
+
 					return
 				}
 				if dSess.DebugOutput {
 					dSess.Logger.WriteDebug(dbgMsg)
 				}
-
 			}
 
 			go hookCfg.Monitor()

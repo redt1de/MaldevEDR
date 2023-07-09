@@ -7,7 +7,7 @@ hooks:
   libdir: z:\\MalDevEDR\\_external\\bin
   helper_dll: x64EDRHelper.dll
   hook_dll: EdrHooksx64.dll
-  pipe: \\.\pipe\MalDevEDR\hooks
+  pipe: \\.\pipe\MalDevEDR\hooks   # still listen on this, but moved hook events to debugger output. low level pipe writes via the hooks were causing issues.
   rules:
     - name: Executable Memory Allocation
       match: Function == "NtAllocateVirtualMemory" 
@@ -15,7 +15,6 @@ hooks:
     - name: testing
       match: 'Function == "NtProtectVirtualMemory" && Args.Protect in ["0x1","0x2","0x4","0x8"]'
       # message:  '"ret: %s,  fn:%s\n",Args.ret,Args.fn'
-
 etw:
   pipe: \\.\pipe\MalDevEDR\events
   global_rules:
