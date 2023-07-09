@@ -1,6 +1,17 @@
 TODO:
-    - seperate config from etw so we can use yaml for all modules.
-    - implement a module tag for console output. need to give each module its own console logger.
-    - de-dupe etw events, some come in twice, especially hooked funcs
-    - fix logger setoutput and enable debug. we changed logger so now some will miss.
-    - verbose flags are screwy in analyze
+    - de-dupe etw events, some come in twice, especially hooked funcs, deepequals on event json?
+    - add ability to hook/monitor processes created by mal file. using call back CREATE_PROCESS_DEBUG_EVENT ?????
+    - need some vars/funcs in parsers to compare addresses to image base,ntdll kernel32 etc. 'InImageBase(ReturnAddress)' or '(ReturnAddress > $NTDLL.SIZE && ReturnAddress < $NTDLL.BASE + $NTDLL.SIZE)' 
+        - may be able to use text/template
+
+            type NtDll struct{
+                Base
+                Size
+            }
+
+            parse rule, replace $NTDLL.SIZE with {{.Size}}, pass NtDll struct to text template.
+
+            OR
+
+            handle symbol lookup in DLL, then we can just do matching based off string.  '! ReturnAddress matches "*ntdll*"'
+

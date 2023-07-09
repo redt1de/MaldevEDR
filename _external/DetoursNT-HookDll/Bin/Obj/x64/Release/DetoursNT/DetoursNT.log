@@ -6,4 +6,4 @@
   disolx64.cpp
   disolx86.cpp
   DetoursNT.cpp
-  DetoursNT.vcxproj -> Z:\c\DetoursNT\Bin\x64\Release\DetoursNT.lib
+  DetoursNT.vcxproj -> C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\x64\Release\DetoursNT.lib

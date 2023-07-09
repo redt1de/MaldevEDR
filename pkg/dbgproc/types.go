@@ -117,6 +117,13 @@ type _LOAD_DLL_DEBUG_INFO struct {
 
 type LoadDllInfo _LOAD_DLL_DEBUG_INFO
 
+type _OUTPUT_DEBUG_STRING_INFO struct {
+	DebugStringData   *uint16
+	Unicode           uint16
+	DebugStringLength uint16
+}
+type OutputDebugStringInfo _OUTPUT_DEBUG_STRING_INFO
+
 type _EXCEPTION_DEBUG_INFO struct {
 	ExceptionRecord _EXCEPTION_RECORD
 	FirstChance     uint32

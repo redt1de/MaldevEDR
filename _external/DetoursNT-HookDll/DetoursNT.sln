@@ -5,7 +5,7 @@ VisualStudioVersion = 17.6.33815.320
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DetoursNT", "DetoursNT\DetoursNT.vcxproj", "{C78B9003-FC49-4BBF-8F29-52FAD48BB58A}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EdrHooks", "SampleHookDLL\SampleHookDLL.vcxproj", "{6266D1B7-DD83-4A79-B7F3-DA8099BBAB1B}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EdrHooks", "EdrHooksDLL\EdrHooksDLL.vcxproj", "{6266D1B7-DD83-4A79-B7F3-DA8099BBAB1B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

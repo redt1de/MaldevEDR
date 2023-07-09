@@ -53,7 +53,7 @@ func (c *ConsoleLogger) WriteInfo(a ...any) {
 func (c *ConsoleLogger) WriteThreat(a ...any) {
 	var tmp []any
 
-	tmp = append(tmp, YellowColor+"[THREAT]")
+	tmp = append(tmp, YellowColor+"[ALERT]")
 	if c.Module != "" {
 		tmp = append(tmp, "["+strings.ToUpper(c.Module)+"]")
 	}

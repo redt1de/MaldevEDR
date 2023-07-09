@@ -152,10 +152,10 @@ func (cf *EWatcher) Start() error {
 	for _, ppl := range cf.PplProviders {
 		if ppl.Enabled {
 			if pipeStarted {
-				cf.Logger.WriteInfo("Monitoring:", ppl.Name, "via ThreatIntelProxy")
+				cf.Logger.WriteInfo("Monitoring:", ppl.Name, "via ThreatIntelProxy, make sure its running")
 				enabledCount++
 			} else {
-				mon := pipemon.NewPipe(`\\.\pipe\MalDevEDR\events`, func(c net.Conn) {
+				mon := pipemon.NewPipe(cf.Pipe, func(c net.Conn) {
 					for {
 						d := json.NewDecoder(c)
 						var event etw.Event

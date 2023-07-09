@@ -1,0 +1,15 @@
+﻿  main.cpp
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4477: 'sprintf' : format string '%x' requires an argument of type 'unsigned int', but variadic argument 2 has type 'HANDLE'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4313: 'sprintf': '%x' in format string conflicts with argument 2 of type 'HANDLE'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4477: 'sprintf' : format string '%x' requires an argument of type 'unsigned int', but variadic argument 3 has type 'PVOID'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4313: 'sprintf': '%x' in format string conflicts with argument 3 of type 'PVOID'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4477: 'sprintf' : format string '%x' requires an argument of type 'unsigned int', but variadic argument 4 has type 'ULONG_PTR'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%llx' in the format string
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%Ix' in the format string
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%I64x' in the format string
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): warning C4477: 'sprintf' : format string '%x' requires an argument of type 'unsigned int', but variadic argument 5 has type 'ULONG_PTR'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%llx' in the format string
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%Ix' in the format string
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(33,23): message : consider using '%I64x' in the format string
+     Creating library c:\temp\EdrHooksx64.lib and object c:\temp\EdrHooksx64.exp
+  EdrHooksDLL.vcxproj -> z:\MalDevEDR\_external\bin\EdrHooksx64.dll

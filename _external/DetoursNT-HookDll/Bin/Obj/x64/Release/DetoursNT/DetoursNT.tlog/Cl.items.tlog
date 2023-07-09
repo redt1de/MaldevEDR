@@ -1,8 +1,8 @@
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\detours.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\detours.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disasm.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disasm.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolarm.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disolarm.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolarm64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disolarm64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolia64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disolia64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolx64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disolx64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolx86.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\disolx86.obj
-Z:\MalDevEDR\_external\DetoursNT\DetoursNT\DetoursNT.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x64\Release\DetoursNT\DetoursNT.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\detours.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\detours.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disasm.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disasm.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disolarm.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disolarm.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disolarm64.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disolarm64.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disolia64.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disolia64.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disolx64.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disolx64.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Detours\src\disolx86.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\disolx86.obj
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\DetoursNT\DetoursNT.cpp;C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\Obj\x64\Release\DetoursNT\DetoursNT.obj

@@ -21,6 +21,7 @@ type Rule struct {
 }
 
 type EWatcher struct {
+	Pipe              string     `yaml:"pipe"`
 	UserModeProviders []Provider `yaml:"user_providers"`
 	PplProviders      []Provider `yaml:"ppl_providers"`
 	GlobalRules       []Rule     `yaml:"global_rules"`

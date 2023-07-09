@@ -2,7 +2,7 @@
 <Project>
   <ProjectOutputs>
     <ProjectOutput>
-      <FullPath>Z:\MalDevEDR\_external\bin\EdrHooksx64.dll</FullPath>
+      <FullPath>z:\MalDevEDR\_external\bin\EdrHooksx64.dll</FullPath>
     </ProjectOutput>
   </ProjectOutputs>
   <ContentFiles />

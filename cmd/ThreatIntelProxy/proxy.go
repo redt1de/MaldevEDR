@@ -18,10 +18,11 @@ import (
 
 var shutdown chan bool
 
-// GOOS=windows GOARCH=amd64 go build -o /work/maldev/testing/proxy.exe ./cmd/ThreatIntelProxy; GOOS=windows GOARCH=amd64 go build -o /work/maldev/testing/edr.exe .
+// GOOS=windows GOARCH=amd64 go build -o ../../_external/ThreatIntelProxy/ThreatIntelProxy.exe .
 func main() {
 	var cpath string
-	flag.StringVar(&cpath, "c", "./etw.yaml", "Path to config file")
+	flag.StringVar(&cpath, "c", "../../config.yaml", "Path to config file")
+	flag.Parse()
 	shutdown = make(chan bool)
 
 	edr, err := config.NewEdr(cpath)

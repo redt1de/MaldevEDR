@@ -1,4 +1,8 @@
 
+debug_process:
+  exit_delay: 2
+  debug_output: true
+  debug_priv: true
 hooks:
   libdir: z:\\MalDevEDR\\_external\\bin
   helper_dll: x64EDRHelper.dll
@@ -6,10 +10,14 @@ hooks:
   pipe: \\.\pipe\MalDevEDR\hooks
   rules:
     - name: Executable Memory Allocation
-      match: Function == "NtAllocateVirtualMemory" && Args.Protect in ["0x1","0x2","0x4","0x8"]
-      # message: EventData.Protect
+      match: Function == "NtAllocateVirtualMemory" 
+      message: '"protect: %s,  return:%s\n",Args.Protect,ReturnAddress'
+    - name: testing
+      match: 'Function == "NtProtectVirtualMemory" && Args.Protect in ["0x1","0x2","0x4","0x8"]'
+      # message:  '"ret: %s,  fn:%s\n",Args.ret,Args.fn'
 
 etw:
+  pipe: \\.\pipe\MalDevEDR\events
   global_rules:
     # - name: Direct Syscall (Remote Proccess)
     #   match: "EventID=10 && CallTrace~='^UNKNOWN.*'"

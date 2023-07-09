@@ -28,12 +28,20 @@ func (q QueryData) MatchesAny(rx string) bool {
 func (cf *HookCfg) ruleMatches(jsn, qry string) (bool, string) {
 	var final string
 
+	if cf.Append != "" {
+		qry = qry + ` ` + cf.Append
+	}
+
 	final = qry
 	qry = preprocInAny(qry)
 	qry = preprocMatchesAny(qry)
 
 	mp := make(QueryData)
 	json.Unmarshal([]byte(jsn), &mp)
+
+	if cf.RuleDbg {
+		cf.Logger.WriteDebug("[RULE DEBUG]", qry)
+	}
 
 	output, err := expr.Eval(qry, mp)
 	if err != nil {

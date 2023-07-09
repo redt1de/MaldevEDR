@@ -1,8 +1,8 @@
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\detours.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\detours.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disasm.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disasm.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolarm.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disolarm.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolarm64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disolarm64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolia64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disolia64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolx64.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disolx64.obj
-Z:\MalDevEDR\_external\DetoursNT\Detours\src\disolx86.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\disolx86.obj
-Z:\MalDevEDR\_external\DetoursNT\DetoursNT\DetoursNT.cpp;Z:\MalDevEDR\_external\DetoursNT\Bin\Obj\x86\Release\DetoursNT\DetoursNT.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\detours.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\detours.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disasm.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disasm.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disolarm.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disolarm.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disolarm64.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disolarm64.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disolia64.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disolia64.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disolx64.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disolx64.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\Detours\src\disolx86.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\disolx86.obj
+Z:\MalDevEDR\_external\DetoursNT-HookDll\DetoursNT\DetoursNT.cpp;Z:\MalDevEDR\_external\DetoursNT-HookDll\Bin\Obj\x86\Release\DetoursNT\DetoursNT.obj
