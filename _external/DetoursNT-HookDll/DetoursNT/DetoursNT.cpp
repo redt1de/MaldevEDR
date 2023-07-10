@@ -347,7 +347,7 @@ __C_specific_handler(
   __debugbreak();
 #endif
 
-  *reinterpret_cast<void**>(nullptr) = nullptr;
+ // *reinterpret_cast<void**>(nullptr) = nullptr;
 
   return (EXCEPTION_DISPOSITION)0;
 #endif

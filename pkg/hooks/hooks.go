@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"net"
 	"path/filepath"
+	"strconv"
+	"strings"
 	"syscall"
 	"unsafe"
 
+	"github.com/redt1de/MaldevEDR/pkg/dbgproc"
 	"github.com/redt1de/MaldevEDR/pkg/pipemon"
 	"github.com/redt1de/MaldevEDR/pkg/util"
 	"golang.org/x/sys/windows"
@@ -48,6 +51,7 @@ type HookEvent struct {
 	Function      string                 `json:"Function"`
 	Mode          string                 `json:"Mode"`
 	ReturnAddress string                 `json:"ReturnAddress"`
+	ReturnSymbol  string                 `json:"ReturnSymbol,omitempty"`
 	Args          map[string]interface{} `json:"Args,omitempty"`
 }
 
@@ -64,6 +68,7 @@ type HookCfg struct {
 	Append       string              `yaml:"-"`
 	Override     string              `yaml:"-"`
 	RuleDbg      bool                `yaml:"-"`
+	ModStore     *dbgproc.ModStore   `yaml:"-"`
 }
 
 type Rule struct {
@@ -172,6 +177,23 @@ func (h *HookCfg) Handler(c net.Conn) {
 	}
 }
 func (h *HookCfg) ParseEvent(blah HookEvent) {
+	var rs string
+	if blah.ReturnAddress != "" {
+		ui64, _ := strconv.ParseUint(strings.TrimLeft(blah.ReturnAddress, "0x"), 16, 64)
+		h.ModStore.Lock()
+
+		for k, v := range *&h.ModStore.Mods {
+			if ui64 > uint64(v.BaseAddr) && ui64 < uint64(v.BaseAddr)+uint64(v.Size) {
+				rs = fmt.Sprintf("%s+0x%x", strings.ToUpper(filepath.Base(k)), ui64-uint64(v.BaseAddr))
+				break
+			}
+		}
+		h.ModStore.Unlock()
+	}
+	if rs != "" {
+		blah.ReturnSymbol = rs
+	}
+
 	pretty, _ := json.MarshalIndent(blah, "", "  ")
 	if h.DisableRules {
 		h.Logger.WriteThreat("Mode", blah.Mode, ", Function:", blah.Function, ", Matches: Rules Disabled")
@@ -195,10 +217,10 @@ func (h *HookCfg) ParseEvent(blah HookEvent) {
 	} else {
 
 		for _, r := range h.Rules {
-			match, q := h.ruleMatches(string(pretty), r.Query)
+			match, _ := h.ruleMatches(string(pretty), r.Query)
 			if match {
 				// h.Logger.WriteThreat("Function:", blah.Function+" via", blah.Mode, "hook Matches: "+r.Name)
-				h.Logger.WriteThreat(r.Name, "detected via", blah.Mode, "hook", "("+q+")")
+				h.Logger.WriteThreat(r.Name, "detected via", blah.Mode, "hook", "("+r.Name+")")
 
 				if h.Verbose {
 					h.Logger.Write(string(pretty))

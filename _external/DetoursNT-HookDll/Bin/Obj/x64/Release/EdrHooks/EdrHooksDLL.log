@@ -11,6 +11,21 @@ C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(32,23): warnin
 C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(32,23): message : consider using '%llx' in the format string
 C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(32,23): message : consider using '%Ix' in the format string
 C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\hooks.h(32,23): message : consider using '%I64x' in the format string
-C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\main.cpp(53,24): warning C4477: 'sprintf' : format string '%p' requires an argument of type 'void *', but variadic argument 2 has type 'ULONG_PTR'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\main.cpp(41,24): warning C4477: 'sprintf' : format string '%p' requires an argument of type 'void *', but variadic argument 2 has type 'ULONG_PTR'
+C:\Users\brad.brown\Desktop\DetoursNT-HookDll\EdrHooksDLL\main.cpp(32,19): warning C4101: 'out': unreferenced local variable
+  Searching libraries
+      Searching ntdllp.lib:
+      Searching C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\x64\Release\DetoursNT.lib:
+      Searching C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\uuid.lib:
+      Searching C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\kernel32.lib:
+      Searching C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.36.32532\lib\x64\LIBCMT.lib:
+      Searching C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.36.32532\lib\x64\OLDNAMES.lib:
+      Searching ntdllp.lib:
+      Searching C:\Users\brad.brown\Desktop\DetoursNT-HookDll\Bin\x64\Release\DetoursNT.lib:
+      Searching C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\uuid.lib:
+      Searching C:\Program Files (x86)\Windows Kits\10\Lib\10.0.18362.0\um\x64\kernel32.lib:
+      Searching C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.36.32532\lib\x64\LIBCMT.lib:
+      Searching C:\Program Files\Microsoft Visual Studio\2022\Professional\VC\Tools\MSVC\14.36.32532\lib\x64\OLDNAMES.lib:
+  Finished searching libraries
      Creating library c:\temp\EdrHooksx64.lib and object c:\temp\EdrHooksx64.exp
   EdrHooksDLL.vcxproj -> z:\MalDevEDR\_external\bin\EdrHooksx64.dll

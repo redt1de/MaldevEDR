@@ -11,9 +11,9 @@
 #pragma intrinsic(_ReturnAddress)
 
 
-extern "C" VOID BackupStuffs(CONTEXT * context);
 
 EXTERN_C NTSYSAPI NTSTATUS NTAPI NtAllocateVirtualMemory(HANDLE ProcessHandle, PVOID* BaseAddress, ULONG_PTR ZeroBits, PSIZE_T RegionSize, ULONG AllocationType, ULONG Protect);
+
 typedef NTSTATUS(NTAPI* fnNtAllocateVirtualMemory)(HANDLE ProcessHandle, PVOID* BaseAddress, ULONG_PTR ZeroBits, PSIZE_T RegionSize, ULONG AllocationType, ULONG Protect);
 
 static fnNtAllocateVirtualMemory OrigNtAllocateVirtualMemory;
@@ -34,7 +34,6 @@ EXTERN_C NTSTATUS NTAPI  HookedNtAllocateVirtualMemory(HANDLE ProcessHandle, PVO
         OutputDebugStringA(jout);
         //WritePipe(jout);
        //PipeTest();
-        
     } while (false);
     
        //return  OrigNtAllocateVirtualMemory(ProcessHandle, BaseAddress, ZeroBits, RegionSize, AllocationType, Protect);

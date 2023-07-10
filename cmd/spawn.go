@@ -6,10 +6,10 @@ package cmd
 import (
 	"bufio"
 	"encoding/json"
-	"fmt"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/redt1de/MaldevEDR/pkg/config"
@@ -61,6 +61,10 @@ var spawnCmd = &cobra.Command{
 			dSess.Logger.WriteErr(e)
 		}
 
+		dSess.LoadDllCB = func(ldi dbgproc.LoadDllInfo) {
+			dSess.UpdateMods()
+		}
+
 		dSess.ExitProcessCB = func(ep dbgproc.ExitProcess) {
 			// keep the process alive until we say so, so we can lookup data in late etw events
 			dSess.Logger.WriteInfo("Process exit requested, waiting for late events")
@@ -80,6 +84,7 @@ var spawnCmd = &cobra.Command{
 			etwCfg.Logger.LogFile = outfile
 			etwCfg.Spawn = &dSess
 			etwCfg.RuleDbg = ruleDev
+			etwCfg.ModStore = &dSess.ModStore
 			if verbose {
 				etwCfg.Verbose = 1
 			}
@@ -98,8 +103,10 @@ var spawnCmd = &cobra.Command{
 			hookCfg.Append = doAppend
 			hookCfg.Override = doOverride
 			hookCfg.RuleDbg = ruleDev
+			hookCfg.ModStore = &dSess.ModStore
 
 			dSess.DebugOutputCB = func(dbgMsg string) {
+				dbgMsg = strings.ReplaceAll(dbgMsg, `\`, `\\`)
 				blah := hooks.HookMessage{}
 				err := json.Unmarshal([]byte(dbgMsg), &blah)
 				if err == nil {
@@ -107,9 +114,9 @@ var spawnCmd = &cobra.Command{
 					case hooks.MSG_EVENT: // Event
 						hookCfg.ParseEvent(blah.Event)
 					case hooks.MSG_STATUS: //Status
-						fmt.Println(blah.Status)
+						//fmt.Println(blah.Status)
 					case hooks.MSG_MODULE: //Module
-						fmt.Println(blah.Module)
+						//fmt.Println(blah.Module)
 					}
 
 					return

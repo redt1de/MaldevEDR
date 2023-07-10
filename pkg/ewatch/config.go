@@ -39,6 +39,7 @@ type EWatcher struct {
 	stopChan          chan bool `yaml:"-"`
 	Running           bool
 	LastErr           error
+	ModStore          *dbgproc.ModStore `yaml:"-"`
 }
 
 func EtwInit(cfg *EWatcher) {

@@ -6,12 +6,31 @@ import (
 	"log"
 	"reflect"
 	"strings"
+	"sync"
 	"syscall"
 	"unsafe"
 
 	"github.com/redt1de/MaldevEDR/pkg/util"
 	"golang.org/x/sys/windows"
 )
+
+type ProcMod struct {
+	ImageName string
+	BaseAddr  uintptr
+	Size      uint32
+}
+
+type ModStore struct {
+	mute *sync.Mutex
+	Mods map[string]ProcMod
+}
+
+func (m *ModStore) Lock() {
+	m.mute.Lock()
+}
+func (m *ModStore) Unlock() {
+	m.mute.Unlock()
+}
 
 func (ds *DbgSession) defaultCreateProcessCB(CreateProcessInfo) {}
 func (ds *DbgSession) defaultLoadDllCB(LoadDllInfo)             {}
@@ -42,6 +61,7 @@ type DbgSession struct {
 	pi              *windows.ProcessInformation `yaml:"-"`
 	Error           func(error)                 `yaml:"-"`
 	Logger          util.ConsoleLogger          `yaml:"-"`
+	ModStore        ModStore
 }
 
 func InitNewDebugProcess(cmdline string, env string, startupdir string, cfg *DbgSession) error {
@@ -105,13 +125,10 @@ func InitNewDebugProcess(cmdline string, env string, startupdir string, cfg *Dbg
 		return err
 	}
 
-	pHand := pi.Process
-	pThread := pi.Thread
-
 	cfg.ProcessId = pi.ProcessId
 	cfg.ProcessImage = exe
-	cfg.ProcessHandle = &pHand
-	cfg.ThreadHandle = &pThread
+	cfg.ProcessHandle = &pi.Process
+	cfg.ThreadHandle = &pi.Thread
 	cfg.CreateProcessCB = cfg.defaultCreateProcessCB
 	cfg.LoadDllCB = cfg.defaultLoadDllCB
 	cfg.ExitProcessCB = cfg.defaultExitProcessCB
@@ -119,6 +136,7 @@ func InitNewDebugProcess(cmdline string, env string, startupdir string, cfg *Dbg
 	cfg.pi = &pi
 	cfg.Error = defaultErrCB
 	cfg.Logger = util.ConsoleLogger{Module: "dbgproc", Debug: true}
+	cfg.ModStore = ModStore{Mods: make(map[string]ProcMod), mute: &sync.Mutex{}}
 	return nil
 }
 
@@ -147,6 +165,7 @@ func InitAttachedDebugProcess(pid uint32, cfg *DbgSession) error {
 	cfg.pi = nil
 	cfg.Error = defaultErrCB
 	cfg.Logger = util.ConsoleLogger{Module: "dbgproc"}
+	cfg.ModStore = ModStore{Mods: make(map[string]ProcMod), mute: &sync.Mutex{}}
 	return nil
 
 }
@@ -175,8 +194,8 @@ func (ds *DbgSession) Resume() {
 		ds.Error(errors.New("failed to start debug session: " + err.Error()))
 	}
 	var debugEvent _DEBUG_EVENT
-	// debugEvent.ProcessId = ds.ProcessId
-	// debugEvent.ThreadId = ds.ThreadId
+	debugEvent.ProcessId = ds.ProcessId
+	debugEvent.ThreadId = ds.ThreadId
 	if ds.pi != nil {
 		go func() {
 			_, err := windows.ResumeThread(ds.pi.Thread)
@@ -218,7 +237,10 @@ func (ds *DbgSession) Resume() {
 				if a[len(a)-1] == 0x00 {
 					a = a[:len(a)-1]
 				}
-				ds.DebugOutputCB(strings.TrimSuffix(string(a), "\n"))
+				if !strings.Contains(string(a), "BasepIsRemovableMedia") { // stupid debug message when running in a VM
+					ds.DebugOutputCB(strings.TrimSuffix(string(a), "\n"))
+				}
+
 			}
 
 		case _LOAD_DLL_DEBUG_EVENT:
@@ -230,17 +252,51 @@ func (ds *DbgSession) Resume() {
 		case _EXIT_PROCESS_DEBUG_EVENT:
 			debugInfo := (*_EXIT_PROCESS_DEBUG_INFO)(unionPtr)
 			ds.ExitProcessCB(*(*ExitProcess)(debugInfo))
-			return
+
 		}
 
 		err = _ContinueDebugEvent(debugEvent.ProcessId, debugEvent.ThreadId, continueStatus)
 		if err != nil {
-			ds.Error(errors.New("ContinueDebugEvent:" + err.Error()))
+			//ds.Error(errors.New("ContinueDebugEvent:" + err.Error()))
 			// return
 		}
 
 	}
 
+}
+
+func (ds *DbgSession) UpdateMods() {
+	hSnap, err := windows.CreateToolhelp32Snapshot(windows.TH32CS_SNAPMODULE|windows.TH32CS_SNAPMODULE32, ds.ProcessId)
+	defer windows.CloseHandle(hSnap)
+	if err != nil {
+		return
+	}
+
+	var entry windows.ModuleEntry32
+	entry.Size = uint32(unsafe.Sizeof(windows.ModuleEntry32{}))
+	err = windows.Module32First(hSnap, &entry)
+	if err != nil {
+		return
+	}
+	ds.ModStore.Lock()
+	tmp := ProcMod{ImageName: windows.UTF16ToString(entry.ExePath[:]), BaseAddr: entry.ModBaseAddr, Size: entry.ModBaseSize}
+	_, ok := ds.ModStore.Mods[tmp.ImageName]
+	if !ok {
+		ds.ModStore.Mods[tmp.ImageName] = tmp
+	}
+	for {
+		err = windows.Module32Next(hSnap, &entry)
+		if err != nil {
+			break
+		}
+		tmp := ProcMod{ImageName: windows.UTF16ToString(entry.ExePath[:]), BaseAddr: entry.ModBaseAddr, Size: entry.ModBaseSize}
+		_, ok := ds.ModStore.Mods[tmp.ImageName]
+		if !ok {
+			ds.ModStore.Mods[tmp.ImageName] = tmp
+		}
+	}
+	ds.ModStore.Unlock()
+	return
 }
 
 // ReadMemory reads an arbitrary memory address.

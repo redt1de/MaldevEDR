@@ -47,11 +47,6 @@
     <ClInclude Include="pipe.h" />
     <ClInclude Include="util.h" />
   </ItemGroup>
-  <ItemGroup>
-    <MASM Include="Thunk.asm">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-    </MASM>
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{6266D1B7-DD83-4A79-B7F3-DA8099BBAB1B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
@@ -352,6 +347,8 @@
       <ProgramDatabaseFile>c:\temp\$(TargetName).pdb</ProgramDatabaseFile>
       <ImportLibrary>c:\temp\$(TargetName).lib</ImportLibrary>
       <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <AdditionalOptions>/verbose:lib %(AdditionalOptions)</AdditionalOptions>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">

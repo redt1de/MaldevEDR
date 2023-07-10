@@ -2,6 +2,8 @@ package dbgproc
 
 import (
 	"syscall"
+
+	"golang.org/x/sys/windows"
 )
 
 // most of this is taken from https://github.com/go-delve/delve
@@ -107,11 +109,11 @@ type _EXIT_PROCESS_DEBUG_INFO struct {
 type ExitProcess _EXIT_PROCESS_DEBUG_INFO
 
 type _LOAD_DLL_DEBUG_INFO struct {
-	File                syscall.Handle
+	File                windows.Handle
 	BaseOfDll           uintptr
 	DebugInfoFileOffset uint32
 	DebugInfoSize       uint32
-	ImageName           uintptr
+	ImageName           *uint16
 	Unicode             uint16
 }
 

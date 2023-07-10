@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/antonmedv/expr"
@@ -58,8 +60,44 @@ func (cf *EWatcher) Start() error {
 
 	go func() {
 		for e := range consumer.Events {
+			val, ok := e.EventData["StackTrace"]
+			var rs string
+			if ok {
+				strace := val.([]interface{})
+				for pos, i := range strace {
+					addr := i.(string)
+					if addr != "0x0" && !strings.HasPrefix(addr, "0xfffff") {
+						ui64, _ := strconv.ParseUint(strings.TrimLeft(addr, "0x"), 16, 64)
+						cf.ModStore.Lock()
+						for k, v := range cf.ModStore.Mods {
+							if ui64 > uint64(v.BaseAddr) && ui64 < uint64(v.BaseAddr)+uint64(v.Size) {
+								rs = fmt.Sprintf("%s+0x%x", strings.ToUpper(filepath.Base(k)), ui64-uint64(v.BaseAddr))
+								break
+							}
+						}
+						cf.ModStore.Unlock()
+						if rs != "" {
+							strace[pos] = rs
+						}
 
-			////////////////// TESTING SYMBOL RESOLUTION ////////////////
+					}
+				}
+				e.EventData["StackTrace"] = strace
+			}
+			//
+			// if blah.ReturnAddress != "" {
+			//
+			// 	for k, v := range *h.ModStore {
+			// 		if ui64 > uint64(v.BaseAddr) && ui64 < uint64(v.BaseAddr)+uint64(v.Size) {
+			// 			rs = fmt.Sprintf("%s+0x%x", strings.ToUpper(filepath.Base(k)), ui64-uint64(v.BaseAddr))
+			// 			break
+			// 		}
+			// 	}
+			// }
+			// if rs != "" {
+			// 	blah.ReturnSymbol = rs
+			// }
+			/////////////// TESTING SYMBOL RESOLUTION ////////////////
 			// if cf.Spawn != nil {
 			// 	val, ok := e.EventData["StackTrace"]
 			// 	// If the key exists

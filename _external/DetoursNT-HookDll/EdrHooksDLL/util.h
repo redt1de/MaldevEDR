@@ -17,6 +17,7 @@ VOID DecrementCurrentNestingLevel();
 
 EXTERN_C int __cdecl sprintf(char* _Buffer, char* _Format, ...); // exported from ntdllp.lib, no user32.dll depends
 
+
 EXTERN_C NTSTATUS NTAPI LdrGetDllHandle(IN PWSTR DllPath OPTIONAL, IN PULONG DllCharacteristics OPTIONAL, IN PUNICODE_STRING DllName, OUT PVOID* DllHandle);
 
 BOOL isDllLoaded(const wchar_t* dllName) {
@@ -84,3 +85,13 @@ VOID DecrementCurrentNestingLevel()
 // {
 //   return NtCurrentTeb()->ActiveFrame;
 //}
+
+DWORD my_strlen(char* inStr) {
+    DWORD msgLen = 0;
+    int i;
+    for (i = 0; inStr[i] != '\0'; i++)
+    {
+        msgLen++; //Counting the length.
+    }
+    return msgLen;
+}

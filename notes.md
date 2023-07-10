@@ -1,4 +1,5 @@
 TODO:
+    - need a mutex on ModStores, concurrent read/writes will crash.
     - need a way to lock loggers so we dont mix events + data if concurrent
     - de-dupe etw events, some come in twice, especially hooked funcs, deepequals on event json?
     - add ability to hook/monitor processes created by mal file. using call back CREATE_PROCESS_DEBUG_EVENT ?????

@@ -10,8 +10,8 @@ hooks:
   pipe: \\.\pipe\MalDevEDR\hooks   # still listen on this, but moved hook events to debugger output. low level pipe writes via the hooks were causing issues.
   rules:
     - name: Executable Memory Allocation
-      match: Function == "NtAllocateVirtualMemory" 
-      message: '"protect: %s,  return:%s\n",Args.Protect,ReturnAddress'
+      match: 'Function == "NtAllocateVirtualMemory" && !(ReturnSymbol matches "NTDLL*")'
+      # message: '"protect: %s,  return:%s\n",Args.Protect,ReturnAddress'
     - name: testing
       match: 'Function == "NtProtectVirtualMemory" && Args.Protect in ["0x1","0x2","0x4","0x8"]'
       # message:  '"ret: %s,  fn:%s\n",Args.ret,Args.fn'
@@ -35,11 +35,14 @@ etw:
       enabled: true
       stacktrace: true
       rules:
-        - name: Memory Allocation
-          # match: EventID == 12 && Task.Name == "KERNEL_THREATINT_TASK_WRITEVM"
-          # match: 'EventID in [1, 6, 21, 26 ]
-          match: 'EventID in [1, 6, 21, 26 ]' 
-          # match: '"DirectSyscalls" matches any'
+        - name: Manual Syscall
+          # match: '(StackTrace[6] matches "0xffff*" && !(StackTrace[7] matches "NTDLL*" || StackTrace[7] matches "0xffff*"))'
+          match: '(StackTrace[5] matches "0xffff*") && !(StackTrace[6] matches "0xffff*" || StackTrace[6] matches "NTDLL*")'
+          message: '"Kernel returns to: %s\n",StackTrace[6]'
+
+        # - name: Memory Allocation
+        #   match: 'EventID in [1, 6, 21, 26 ]' 
+
     - name: Microsoft-Windows-Sysmon
       enabled: false
       stacktrace: false
