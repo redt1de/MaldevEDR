@@ -11,15 +11,17 @@ I am not a real dev nor an expert in anything. In fact one of the reasons I star
 
 ## ToDo
 - [ ] develop some real rules, currently the config only has a few test rules
+- [ ] finish the attach mode.  bare bones functionlity is there, but some recent changes in dbgproc may have broke it.
 - [ ] learn to be a real C dev so I can make the EDR dll great again
 - [ ] add more NTAPI hooks, currently only NtAllocateVirtualMemory is implented for testing.
 - [ ] leverage the CREATE_PROCESS_DEBUG_EVENT to monitor/inject processes created by the malware.
 - [ ] need a way to lock logger output so we dont stomp/mix outputs.
 - [ ] de-dupe etw events, some come in twice, especially hooked funcs
 
+
 #### Notes:
-- spawned processes are initially created suspened, debugger is attached, and then resumed. Debug API has 2 advantages, 1. we can prevent the process from exiting until we are finishined, 2. we can use OUTPUT_DEBUG_STRING_EVENT for communication with the DLL. 
-- spawned process occasionally crash/hang. I suspect this either an issue with my C skills in the DLL, but could be an issue in the debugger routine logic. Working on this.
+- spawned processes are initially created suspened, debugger is attached, and then resumed. Debug API has 2 advantages, 1. we can prevent the process from exiting until we are finished, 2. we can use OUTPUT_DEBUG_STRING_EVENT for communication with the DLL. 
+- spawned process occasionally crash/hang. I suspect this either an issue with my C skills in the DLL or an issue in the debugger routine logic. Working on this.
 - the use of expr is a security risk, its essentially an eval on user supplied data, but again this should not run anywhere but a dedicated malware VM.
 
 # Modes
@@ -32,6 +34,7 @@ I am not a real dev nor an expert in anything. In fact one of the reasons I star
 - generic symbol resolution for ETW stack trace, and hooked func return addresses. 
 
 ## Attach
+- work is in progress, not all functionality is ready in attach yet.
 - essentially the same as Spawn, but attaches to a process that is already running.
 
 ## Monitor
