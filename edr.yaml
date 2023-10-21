@@ -1,0 +1,19 @@
+session_dir: ./session/
+# log_file: ./edr.log
+debug: false
+rule_file: ./rules.yaml
+#events_history_size: 10 #needs work
+
+etw:
+  providers:
+  - name: Microsoft-Windows-Threat-Intelligence
+    enabled: true
+    stacktrace: true
+  - name: Microsoft-Windows-Sysmon
+    enabled: true
+    stacktrace: false
+
+capture_filters:
+  - name: Ignore VirtualBox Interactions
+    match: '"VBox" matches any'
+    enabled: true 

@@ -2,16 +2,12 @@ package threatcheck
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strconv"
 	"strings"
-
-	"github.com/redt1de/MaldevEDR/pkg/util"
 )
 
 const (
@@ -25,9 +21,11 @@ const (
 var badBytes []byte
 
 type DefenderScanResult struct {
+	Threat    bool
 	Result    ScanResult
 	Signature string
 	BadBytes  []byte
+	Offset    uint64
 }
 
 type ScanResult int
@@ -37,7 +35,7 @@ type Scanner interface {
 }
 
 type Defender struct {
-	Logger    *util.ConsoleLogger
+	// Logger    *util.ConsoleLogger
 	FileBytes []byte
 	FilePath  string
 	Malicious bool
@@ -45,22 +43,22 @@ type Defender struct {
 }
 
 func NewDefender() *Defender {
-	return &Defender{Logger: &util.ConsoleLogger{Module: "threatcheck"}}
+	return &Defender{}
 }
 
-func (d *Defender) AnalyzeFile(fPath string) DefenderScanResult {
+func (d *Defender) AnalyzeFile(fPath string) (*DefenderScanResult, error) {
 	var ret DefenderScanResult
 	file, err := os.ReadFile(fPath)
 	if err != nil {
-		d.Logger.WriteFatal("failed read mal file")
+		return nil, fmt.Errorf("failed read mal file: %w", err)
 	}
 	d.FileBytes = file
 	if _, err := os.Stat("C:\\Temp"); os.IsNotExist(err) {
-		d.Logger.WriteDebug(`C:\Temp doesn't exist. Creating it...`)
+		// d.Logger.WriteDebug(`C:\Temp doesn't exist. Creating it...`)
 		os.Mkdir("C:\\Temp", os.ModePerm)
 	}
 
-	d.Logger.WriteInfo("Performing static analysis via MpCmdRun.exe...")
+	// fmt.Printf("Performing static analysis via MpCmdRun.exe...\n")
 
 	d.FilePath = filepath.Join("C:\\Temp", "file.exe")
 	ioutil.WriteFile(d.FilePath, d.FileBytes, os.ModePerm)
@@ -69,45 +67,47 @@ func (d *Defender) AnalyzeFile(fPath string) DefenderScanResult {
 	ret.Result = status.Result
 
 	if status.Result == NoThreatFound {
-		d.Logger.WriteSuccess("No threat found!")
-		return ret
+		// d.Logger.WriteSuccess("No threat found!")
+		return &ret, nil
 	}
 
 	ret.Signature = status.Signature
-	d.Logger.WriteThreat("File identified as:", status.Signature)
-	d.Malicious = true
+	// fmt.Printf("File identified as: %s\n", status.Signature)
 
-	d.Logger.WriteDebug(fmt.Sprintf("Target file size: %d bytes", len(d.FileBytes)))
+	ret.Threat = true
+
+	// d.Logger.WriteDebug(fmt.Sprintf("Target file size: %d bytes", len(d.FileBytes)))
 
 	splitArray := make([]byte, len(d.FileBytes)/2)
 	copy(splitArray, d.FileBytes[:len(d.FileBytes)/2])
 	lastgood := 0
-
 	for {
-		d.Logger.WriteDebug("Testing " + strconv.Itoa(len(splitArray)) + " bytes")
+		// d.Logger.WriteDebug("Testing " + strconv.Itoa(len(splitArray)) + " bytes")
 		// File.WriteAllBytes(FilePath, splitArray);
 		err := ioutil.WriteFile(d.FilePath, splitArray, os.ModePerm)
 		if err != nil {
-			d.Logger.WriteFatal("threacheck loop:", err)
-			os.Exit(1)
+			// d.Logger.WriteFatal("threacheck loop:", err)
+			// os.Exit(1)
+			return nil, fmt.Errorf("threacheck loop: %w", err)
 		}
 		status = d.ScanFile(d.FilePath, false)
 
 		if status.Result == ThreatFound {
-			d.Logger.WriteDebug("Threat found, splitting")
-			tmpArray := d.HalfSplitter(splitArray, lastgood)
+			// d.Logger.WriteDebug("Threat found, splitting")
+			tmpArray, tmpOffset := d.HalfSplitter(splitArray, lastgood)
+			ret.Offset = tmpOffset
 			splitArray = make([]byte, len(tmpArray))
 			copy(splitArray, tmpArray)
 
 		} else if status.Result == NoThreatFound {
-			d.Logger.WriteDebug("No threat found, increasing size")
+			// d.Logger.WriteDebug("No threat found, increasing size")
 			lastgood = len(splitArray)
 			tmpArray := d.Overshot(d.FileBytes, len(splitArray))
 			splitArray = make([]byte, len(tmpArray))
 			copy(splitArray, tmpArray)
 		} else {
-			d.Logger.WriteFatal("threacheck loop: running Defender failed")
-			return DefenderScanResult{}
+			// d.Logger.WriteFatal("threacheck loop: running Defender failed")
+			return nil, fmt.Errorf("threacheck loop: running Defender failed")
 		}
 
 		if d.Complete {
@@ -116,7 +116,7 @@ func (d *Defender) AnalyzeFile(fPath string) DefenderScanResult {
 	}
 	ret.BadBytes = make([]byte, len(badBytes))
 	copy(ret.BadBytes, badBytes)
-	return ret
+	return &ret, nil
 
 }
 
@@ -168,12 +168,14 @@ func parseSignatureName(output string) string {
 	return ""
 }
 
-func (d *Defender) HalfSplitter(originalArray []byte, lastGood int) []byte {
+func (d *Defender) HalfSplitter(originalArray []byte, lastGood int) ([]byte, uint64) {
+	retOffset := uint64(0)
 	splitArray := make([]byte, (len(originalArray)-lastGood)/2+lastGood)
 
 	if len(originalArray) == len(splitArray)+1 {
-		msg := fmt.Sprintf("Identified end of bad bytes at offset 0x%X", len(originalArray))
-		d.Logger.WriteInfo(msg)
+		// fmt.Printf("Identified end of bad bytes at offset 0x%X\n", len(originalArray))
+		// d.Logger.WriteInfo(msg)
+		retOffset = uint64(len(originalArray))
 
 		offendingBytes := make([]byte, 256)
 		if len(originalArray) < 256 {
@@ -183,14 +185,14 @@ func (d *Defender) HalfSplitter(originalArray []byte, lastGood int) []byte {
 			copy(offendingBytes, originalArray[len(originalArray)-256:])
 		}
 
-		d.Logger.Write(hex.Dump(offendingBytes))
+		// fmt.Println(hex.Dump(offendingBytes))
 		badBytes = append(badBytes, offendingBytes...)
 		// copy(badBytes, offendingBytes)
 		d.Complete = true
 	}
 
 	copy(splitArray, originalArray[:len(splitArray)])
-	return splitArray
+	return splitArray, retOffset
 }
 
 func (d *Defender) Overshot(originalArray []byte, splitArraySize int) []byte {
@@ -200,7 +202,7 @@ func (d *Defender) Overshot(originalArray []byte, splitArraySize int) []byte {
 		d.Complete = true
 
 		if d.Malicious {
-			d.Logger.WriteErr("File is malicious, but couldn't identify bad bytes")
+			fmt.Println("File is malicious, but couldn't identify bad bytes")
 		}
 	}
 

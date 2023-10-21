@@ -1,0 +1,10 @@
+
+- name: Executable Memory Allocation
+  match: 'EventID in [1, 6, 21, 26 ]'
+  enabled: true 
+  message: '"Size: %s \n",RegionSize'
+
+- name: testing
+  match: 'Function == "NtProtectVirtualMemory" && Args.NewAccessProtection in ["0x4","0x40"]'
+  enabled: true
+  message:  '"ret: %s,  fn:%s\n",Args.ret,Args.fn'
